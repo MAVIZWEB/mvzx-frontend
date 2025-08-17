@@ -1,0 +1,32 @@
+ :root{
+  --bg: #f7f7fb;
+  --card: #ffffff;
+  --accent: #6366f1;
+  --green: #16a34a;
+  --orange: #f97316;
+  --lemon: #a3e635;
+  --text: #111827;
+  --muted: #6b7280;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,var(--bg),#ffffff);color:var(--text);font-family:Inter,system-ui,Arial;min-height:100vh}
+.container{max-width:980px;margin:0 auto;padding:24px}
+.center{display:flex;align-items:center;justify-content:center;flex-direction:column}
+.logo{width:120px;height:120px;border-radius:999px;box-shadow:0 8px 20px rgba(15,23,42,0.08)}
+.title{font-weight:700;font-size:28px;text-align:center;margin-top:12px}
+.card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(15,23,42,0.04);width:100%}
+.lead{color:var(--muted);font-size:16px;line-height:1.6}
+.cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.btn{padding:10px 18px;border-radius:999px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.btn-primary{background:var(--accent);color:white}
+.btn-telegram{background:#06b6d4;color:white}
+.btn-orange{background:var(--orange);color:white}
+.btn-green{background:var(--green);color:white}
+.small{font-size:13px;color:var(--muted)}
+.counter{font-weight:700;color:var(--green);margin-top:6px}
+.footer{margin-top:28px;text-align:center;color:var(--muted);font-size:13px}
+.modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:white;padding:18px;border-radius:10px;min-width:320px;max-width:420px}
+.form-row{display:flex;flex-direction:column;margin-bottom:10px}
+.input{padding:10px;border-radius:8px;border:1px solid #e5e7eb}
