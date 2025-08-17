@@ -1,4 +1,4 @@
-import React from "react";
+ import React from "react";
 
 export default function App() {
   return (
@@ -16,7 +16,7 @@ export default function App() {
       </h1>
 
       {/* Content */}
-      <div className="max-w-2xl text-gray-700 space-y-4 text-lg leading-relaxed">
+      <div className="max-w-2xl text-gray-700 space-y-4 text-lg leading-relaxed text-center">
         <p>
           ✅ <strong>EARN:</strong> You can Earn up to{" "}
           <span className="font-bold text-green-600">N2M</span> in Days Just
@@ -44,6 +44,24 @@ export default function App() {
             Early to Buy, Early to Earn. Start!
           </span>
         </p>
+      </div>
+
+      {/* CTA Buttons */}
+      <div className="mt-8 flex flex-col sm:flex-row gap-4">
+        <a
+          href="#buy" // Replace with your Buy Page link
+          className="px-6 py-3 bg-indigo-600 text-white font-semibold rounded-2xl shadow-md hover:bg-indigo-700 transition"
+        >
+          Buy MVZx Now
+        </a>
+        <a
+          href="https://t.me/MAVIZq"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-6 py-3 bg-green-600 text-white font-semibold rounded-2xl shadow-md hover:bg-green-700 transition"
+        >
+          Join the Community
+        </a>
       </div>
     </div>
   );
