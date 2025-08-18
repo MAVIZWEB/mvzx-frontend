@@ -1,133 +1,72 @@
 import React, { useState } from "react";
+import "./App.css";
+import logo from "./assets/logo.png"; // Restore your logo path
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<"home" | "deposit">("home");
-  const [userWallet, setUserWallet] = useState<string>("");
   const [spinResult, setSpinResult] = useState<string>("");
 
-  const menuItems = ["Home", "Buy", "Escrow", "Mining", "Airdrop"];
+  const menuRow1 = ["Home", "Buy", "Escrow"];
+  const menuRow2 = ["Mining", "Airdrop"];
 
   // --- Spin & Win Handler ---
-  const handleSpin = async () => {
-    if (!userWallet) {
-      alert("Please enter your wallet address first.");
-      return;
-    }
-    try {
-      const res = await fetch("/api/spin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: userWallet, spinType: "free" }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSpinResult(
-          `Congratulations! You won ${data.amount} MVZx. TX: ${data.txHash}`
-        );
-      } else {
-        setSpinResult(`Spin failed: ${data.error}`);
-      }
-    } catch (err: any) {
-      console.error(err);
-      setSpinResult("Spin failed. Try again later.");
-    }
+  const handleSpin = () => {
+    // Placeholder for backend logic
+    alert("Spin triggered! Rewards logic to be implemented.");
+    setSpinResult("You won a placeholder amount! Backend logic pending.");
   };
 
   // --- Manual Deposit Handler ---
-  const handleDepositSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleDepositSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const payload = {
-      walletAddress: formData.get("walletAddress"),
-      date: formData.get("date"),
-      time: formData.get("time"),
-      phone: formData.get("phone"),
-    };
-    try {
-      const res = await fetch("/api/deposit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert("Deposit submitted! Admin will approve and tokens will be sent.");
-      } else {
-        alert(`Deposit failed: ${data.error}`);
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert("Deposit submission failed. Try again later.");
-    }
+    alert("Deposit submitted! Admin approval & token transfer logic to be implemented.");
+  };
+
+  const handleCancel = () => {
+    setCurrentPage("home");
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        backgroundColor: "#40E0D0", // turquoise
-        fontFamily: "Arial, sans-serif",
-        color: "#000",
-      }}
-    >
+    <div className="App" style={{ minHeight: "100vh", fontFamily: "Arial, sans-serif", color: "#000" }}>
       {/* Header */}
-      <header
-        style={{
-          padding: "1rem",
-          textAlign: "center",
-          borderBottom: "2px solid #000",
-        }}
-      >
+      <header style={{ padding: "1rem", textAlign: "center", borderBottom: "2px solid #000" }}>
+        <img src={logo} alt="MAVIZ Logo" style={{ width: "120px", marginBottom: "0.5rem" }} />
         <h1 style={{ margin: 0 }}>MAVIZ LIQUIDITY & REVENUE SHARING</h1>
-        <nav style={{ marginTop: "1rem" }}>
-          {menuItems.map((item) => (
-            <button
-              key={item}
-              style={{
-                margin: "0 10px",
-                padding: "0.5rem 1rem",
-                cursor: "pointer",
-                borderRadius: "5px",
-                border: "1px solid #000",
-                background: "#fff",
-              }}
-              onClick={() =>
-                setCurrentPage(item === "Home" ? "home" : "deposit")
-              }
-            >
-              {item}
-            </button>
-          ))}
+        <p style={{ margin: "0.5rem 0" }}>Buy, Earn & Participate in MVZx Revenue Sharing!</p>
+        <nav style={{ marginTop: "0.5rem" }}>
+          <div style={{ marginBottom: "0.5rem" }}>
+            {menuRow1.map((item) => (
+              <button
+                key={item}
+                onClick={() => setCurrentPage(item === "Home" ? "home" : "deposit")}
+                style={{ margin: "0 8px", padding: "0.5rem 1rem", borderRadius: "5px", border: "1px solid #000", cursor: "pointer", backgroundColor: "#fff" }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+          <div>
+            {menuRow2.map((item) => (
+              <button
+                key={item}
+                onClick={() => setCurrentPage(item === "Home" ? "home" : "deposit")}
+                style={{ margin: "0 8px", padding: "0.5rem 1rem", borderRadius: "5px", border: "1px solid #000", cursor: "pointer", backgroundColor: "#fff" }}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
         </nav>
       </header>
 
-      {/* Content */}
       <main style={{ marginTop: "0.5cm", padding: "1rem" }}>
         {currentPage === "home" && (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-            }}
-          >
-            {/* Wallet Input */}
-            <div style={{ marginBottom: "1rem" }}>
-              <label>Enter Your Wallet Address: </label>
-              <input
-                type="text"
-                value={userWallet}
-                onChange={(e) => setUserWallet(e.target.value)}
-                placeholder="0x..."
-                style={{ padding: "0.5rem", width: "300px" }}
-              />
-            </div>
-
-            {/* Spin & Win Placeholder */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            {/* Spin & Win Game Top */}
             <div
               style={{
-                width: "65vw",
-                height: "65vh",
+                width: "80vw",
+                height: "70vh",
                 backgroundColor: "#fff",
                 borderRadius: "20px",
                 display: "flex",
@@ -140,7 +79,7 @@ const App: React.FC = () => {
                 marginBottom: "2rem",
               }}
             >
-              🎡 Spin & Win Game 🎡
+              🎡 Spin & Win 🎡
               <button
                 onClick={handleSpin}
                 style={{
@@ -157,38 +96,28 @@ const App: React.FC = () => {
                 Spin Now
               </button>
               {spinResult && (
-                <p style={{ marginTop: "1rem", fontSize: "1rem" }}>
-                  {spinResult}
-                </p>
+                <p style={{ marginTop: "1rem", fontSize: "1rem" }}>{spinResult}</p>
               )}
             </div>
 
-            {/* Feature Buttons */}
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                justifyContent: "center",
-                gap: "1rem",
-              }}
-            >
-              {["ESCROW TRADE", "BUY MVZX", "AIRDROP", "MINING"].map(
-                (feature) => (
-                  <button
-                    key={feature}
-                    style={{
-                      padding: "1rem 2rem",
-                      borderRadius: "10px",
-                      border: "none",
-                      backgroundColor: "#fff",
-                      cursor: "pointer",
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {feature}
-                  </button>
-                )
-              )}
+            {/* Feature Buttons Bottom */}
+            <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "1rem" }}>
+              {["ESCROW TRADE", "BUY MVZX", "AIRDROP", "MINING"].map((feature) => (
+                <button
+                  key={feature}
+                  onClick={() => setCurrentPage(feature === "BUY MVZX" ? "deposit" : "home")}
+                  style={{
+                    padding: "1rem 2rem",
+                    borderRadius: "10px",
+                    border: "none",
+                    backgroundColor: "#fff",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                  }}
+                >
+                  {feature}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -202,46 +131,41 @@ const App: React.FC = () => {
               backgroundColor: "#fff",
               padding: "2rem",
               borderRadius: "20px",
+              position: "relative",
             }}
           >
-            <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>
-              Manual Deposit
-            </h2>
-            <p>
-              Pay to: <strong>Masses 1026664654 UBA</strong>
-            </p>
+            <button
+              onClick={handleCancel}
+              style={{
+                position: "absolute",
+                top: "10px",
+                right: "10px",
+                border: "none",
+                background: "transparent",
+                fontSize: "1.5rem",
+                cursor: "pointer",
+              }}
+            >
+              ✖
+            </button>
+            <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>Manual Deposit</h2>
+            <p>Pay to: <strong>Masses 1026664654 UBA</strong></p>
             <form onSubmit={handleDepositSubmit}>
               <div style={{ marginBottom: "1rem" }}>
                 <label>Wallet Address:</label>
-                <input
-                  name="walletAddress"
-                  type="text"
-                  required
-                  style={{ width: "100%", padding: "0.5rem" }}
-                />
+                <input type="text" required style={{ width: "100%", padding: "0.5rem" }} />
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <label>Date on Receipt:</label>
-                <input
-                  name="date"
-                  type="date"
-                  required
-                  style={{ width: "100%", padding: "0.5rem" }}
-                />
+                <input type="date" required style={{ width: "100%", padding: "0.5rem" }} />
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <label>Time on Receipt:</label>
-                <input
-                  name="time"
-                  type="time"
-                  required
-                  style={{ width: "100%", padding: "0.5rem" }}
-                />
+                <input type="time" required style={{ width: "100%", padding: "0.5rem" }} />
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <label>Phone Number:</label>
                 <input
-                  name="phone"
                   type="tel"
                   pattern="\d{10,15}"
                   placeholder="e.g. 08012345678"
