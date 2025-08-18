@@ -1,55 +1,85 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 
 export default function Home() {
+  const [spinCount, setSpinCount] = useState(0);
+
+  function handleSpin() {
+    alert("Spin triggered! Rewards logic to be implemented.");
+    setSpinCount(prev => prev + 1);
+  }
+
   return (
-    <main className="flex flex-col items-center justify-center flex-grow text-center px-4 py-12">
-      <h1 className="text-3xl font-bold mb-4">MAVIZ (MVZx) — Liquidity & Revenue Sharing</h1>
-      <p className="text-lg text-gray-700 mb-6 max-w-2xl">
-        ✅ EARN: You can earn rewards by buying MVZx tokens. This platform is a community
-        reward system for buyers. Early buyers benefit more.
-      </p>
+    <main className="flex flex-col items-center justify-start min-h-screen px-4 py-6 bg-gray-50">
+      
+      {/* Header / Logo */}
+      <header className="flex items-center justify-center w-full mb-6">
+        <img 
+          src="https://i.imgur.com/VbxvCK6.jpeg" 
+          alt="Maviz Logo" 
+          className="h-16 w-auto mr-3"
+        />
+        <h1 className="text-2xl font-bold">MAVIZ (MVZx)</h1>
+      </header>
 
-      <div className="flex flex-wrap gap-4 justify-center">
-        <a
-          href="https://t.me/MAVIZq"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="px-6 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700"
-        >
-          Join Community
-        </a>
+      {/* Spin & Win Game (60% of screen height) */}
+      <section className="w-full max-w-4xl bg-white rounded-xl shadow p-6 mb-6 flex flex-col items-center justify-center" style={{ height: "60vh" }}>
+        <h2 className="text-xl font-semibold mb-4">🎡 Spin & Win Game 🎡</h2>
+        <div className="flex-1 w-full flex flex-col items-center justify-center bg-gray-100 rounded-lg p-6">
+          <p className="text-gray-700 text-center mb-4">
+            Spin the wheel and earn rewards! Spins used: {spinCount}
+          </p>
+          <button
+            onClick={handleSpin}
+            className="bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-8 rounded-lg transition-colors"
+          >
+            Spin Now
+          </button>
+        </div>
+      </section>
 
+      {/* Feature Buttons (40% of screen height) */}
+      <section className="w-full max-w-4xl flex flex-wrap justify-center gap-4" style={{ minHeight: "20vh" }}>
         <Link
           to="/signup"
-          className="px-6 py-2 bg-green-600 text-white rounded-lg shadow hover:bg-green-700"
+          className="flex-1 min-w-[140px] py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 text-center"
         >
           Get Started
         </Link>
 
         <Link
           to="/escrow"
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700"
+          className="flex-1 min-w-[140px] py-3 bg-purple-600 text-white font-semibold rounded-lg shadow hover:bg-purple-700 text-center"
         >
           Escrow Trade
         </Link>
 
         <Link
           to="/buy"
-          className="px-6 py-2 bg-yellow-600 text-white rounded-lg shadow hover:bg-yellow-700"
+          className="flex-1 min-w-[140px] py-3 bg-yellow-600 text-white font-semibold rounded-lg shadow hover:bg-yellow-700 text-center"
         >
           Buy (Card / USDT)
         </Link>
 
         <Link
           to="/mining"
-          className="px-6 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700"
+          className="flex-1 min-w-[140px] py-3 bg-red-600 text-white font-semibold rounded-lg shadow hover:bg-red-700 text-center"
         >
           Free Mining
         </Link>
-      </div>
 
-      <section className="mt-10 max-w-2xl text-left">
+        <a
+          href="https://t.me/MAVIZq"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex-1 min-w-[140px] py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 text-center"
+        >
+          Join Community
+        </a>
+      </section>
+
+      {/* Quick Notes */}
+      <section className="mt-8 max-w-2xl text-left">
         <h3 className="font-semibold mb-2">Quick notes</h3>
         <ul className="list-disc ml-5 text-sm text-gray-700">
           <li>MVZx total supply: 100,000,000 — 60,000,000 allocated to public/private sales.</li>
