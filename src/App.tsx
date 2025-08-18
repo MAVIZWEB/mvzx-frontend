@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
-import "./App.css";
+import React, { useState } from "react";
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<"home" | "deposit">("home");
-  const [userWallet, setUserWallet] = useState<string>(""); // Wallet address
-  const [spinCooldown, setSpinCooldown] = useState<number>(0); // seconds
+  const [userWallet, setUserWallet] = useState<string>("");
   const [spinResult, setSpinResult] = useState<string>("");
 
   const menuItems = ["Home", "Buy", "Escrow", "Mining", "Airdrop"];
@@ -63,11 +61,6 @@ const App: React.FC = () => {
     }
   };
 
-  // --- Wallet Input Handler ---
-  const handleWalletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setUserWallet(e.target.value);
-  };
-
   return (
     <div
       style={{
@@ -124,7 +117,7 @@ const App: React.FC = () => {
               <input
                 type="text"
                 value={userWallet}
-                onChange={handleWalletChange}
+                onChange={(e) => setUserWallet(e.target.value)}
                 placeholder="0x..."
                 style={{ padding: "0.5rem", width: "300px" }}
               />
