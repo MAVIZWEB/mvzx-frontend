@@ -1,20 +1,71 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
 
 const App: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<"home" | "deposit">("home");
+  const [userWallet, setUserWallet] = useState<string>(""); // Wallet address
+  const [spinCooldown, setSpinCooldown] = useState<number>(0); // seconds
+  const [spinResult, setSpinResult] = useState<string>("");
 
   const menuItems = ["Home", "Buy", "Escrow", "Mining", "Airdrop"];
 
-  // Placeholder function for Spin & Win
-  const handleSpin = () => {
-    alert("Spin triggered! Rewards logic to be implemented.");
+  // --- Spin & Win Handler ---
+  const handleSpin = async () => {
+    if (!userWallet) {
+      alert("Please enter your wallet address first.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/spin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress: userWallet, spinType: "free" }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSpinResult(
+          `Congratulations! You won ${data.amount} MVZx. TX: ${data.txHash}`
+        );
+      } else {
+        setSpinResult(`Spin failed: ${data.error}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      setSpinResult("Spin failed. Try again later.");
+    }
   };
 
-  // Placeholder function for manual deposit submission
-  const handleDepositSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // --- Manual Deposit Handler ---
+  const handleDepositSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert("Deposit submitted! Admin approval & token transfer logic to be implemented.");
+    const formData = new FormData(e.currentTarget);
+    const payload = {
+      walletAddress: formData.get("walletAddress"),
+      date: formData.get("date"),
+      time: formData.get("time"),
+      phone: formData.get("phone"),
+    };
+    try {
+      const res = await fetch("/api/deposit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Deposit submitted! Admin will approve and tokens will be sent.");
+      } else {
+        alert(`Deposit failed: ${data.error}`);
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Deposit submission failed. Try again later.");
+    }
+  };
+
+  // --- Wallet Input Handler ---
+  const handleWalletChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserWallet(e.target.value);
   };
 
   return (
@@ -67,6 +118,18 @@ const App: React.FC = () => {
               alignItems: "center",
             }}
           >
+            {/* Wallet Input */}
+            <div style={{ marginBottom: "1rem" }}>
+              <label>Enter Your Wallet Address: </label>
+              <input
+                type="text"
+                value={userWallet}
+                onChange={handleWalletChange}
+                placeholder="0x..."
+                style={{ padding: "0.5rem", width: "300px" }}
+              />
+            </div>
+
             {/* Spin & Win Placeholder */}
             <div
               style={{
@@ -75,6 +138,7 @@ const App: React.FC = () => {
                 backgroundColor: "#fff",
                 borderRadius: "20px",
                 display: "flex",
+                flexDirection: "column",
                 justifyContent: "center",
                 alignItems: "center",
                 fontSize: "1.5rem",
@@ -83,7 +147,7 @@ const App: React.FC = () => {
                 marginBottom: "2rem",
               }}
             >
-              🎡 Spin & Win Game Placeholder 🎡
+              🎡 Spin & Win Game 🎡
               <button
                 onClick={handleSpin}
                 style={{
@@ -99,6 +163,11 @@ const App: React.FC = () => {
               >
                 Spin Now
               </button>
+              {spinResult && (
+                <p style={{ marginTop: "1rem", fontSize: "1rem" }}>
+                  {spinResult}
+                </p>
+              )}
             </div>
 
             {/* Feature Buttons */}
@@ -152,6 +221,7 @@ const App: React.FC = () => {
               <div style={{ marginBottom: "1rem" }}>
                 <label>Wallet Address:</label>
                 <input
+                  name="walletAddress"
                   type="text"
                   required
                   style={{ width: "100%", padding: "0.5rem" }}
@@ -159,15 +229,26 @@ const App: React.FC = () => {
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <label>Date on Receipt:</label>
-                <input type="date" required style={{ width: "100%", padding: "0.5rem" }} />
+                <input
+                  name="date"
+                  type="date"
+                  required
+                  style={{ width: "100%", padding: "0.5rem" }}
+                />
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <label>Time on Receipt:</label>
-                <input type="time" required style={{ width: "100%", padding: "0.5rem" }} />
+                <input
+                  name="time"
+                  type="time"
+                  required
+                  style={{ width: "100%", padding: "0.5rem" }}
+                />
               </div>
               <div style={{ marginBottom: "1rem" }}>
                 <label>Phone Number:</label>
                 <input
+                  name="phone"
                   type="tel"
                   pattern="\d{10,15}"
                   placeholder="e.g. 08012345678"
