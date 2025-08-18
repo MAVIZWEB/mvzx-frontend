@@ -1,8 +1,13 @@
-@tailwind base;
+ @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* You can add your global styles here */
+/* small global rules */
+html, body, #root {
+  height: 100%;
+}
 body {
-  @apply bg-gray-100 text-gray-800;
+  @apply bg-gray-50 text-gray-800;
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
 }
