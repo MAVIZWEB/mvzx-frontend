@@ -1,38 +1,71 @@
- import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+
+const rewards = [
+  "0.125 MVZx", // Free mining reward
+  "0.25 MVZx",
+  "0.375 MVZx",
+  "0.5 MVZx",
+  "0.625 MVZx",
+  "0.75 MVZx",
+  "1 MVZx",
+  "3× Free Reward",
+];
 
 export default function Game() {
+  const [spinning, setSpinning] = useState(false);
+  const [reward, setReward] = useState<string | null>(null);
+
+  const spinWheel = () => {
+    if (spinning) return;
+    setSpinning(true);
+    setReward(null);
+
+    // Mock spinning time
+    const spinDuration = 3000;
+    setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * rewards.length);
+      const selectedReward = rewards[randomIndex];
+      setReward(selectedReward);
+
+      // Mock token transfer (replace with backend call later)
+      console.log(`Mock: ${selectedReward} sent to user wallet`);
+
+      setSpinning(false);
+    }, spinDuration);
+  };
+
   return (
-    <main className="flex flex-col h-screen">
-      {/* Top 60% - Game UI */}
-      <div className="flex flex-col items-center justify-center flex-[0.6] bg-gradient-to-br from-purple-600 to-indigo-700 text-white rounded-b-3xl shadow-lg">
-        <h2 className="text-2xl font-bold mb-6">🎰 Spin & Win</h2>
-        
-        {/* Placeholder wheel */}
-        <div className="w-56 h-56 rounded-full bg-white flex items-center justify-center shadow-2xl border-8 border-yellow-400">
-          <span className="text-xl font-bold text-gray-800">SPIN</span>
+    <div className="flex flex-col items-center justify-center w-full h-[60vh] bg-gray-50 rounded-lg shadow-lg p-6">
+      <h2 className="text-2xl font-bold mb-4">Spin & Win MVZx Tokens!</h2>
+
+      <div className="relative w-64 h-64 mb-6">
+        {/* Wheel */}
+        <div
+          className={`w-full h-full rounded-full border-8 border-yellow-400 flex items-center justify-center transition-transform duration-[3s] ${
+            spinning ? "rotate-[1080deg]" : ""
+          }`}
+        >
+          <span className="absolute text-center font-semibold text-lg">
+            {spinning ? "Spinning..." : "🎰"}
+          </span>
         </div>
-
-        <button className="mt-6 px-6 py-3 bg-yellow-500 rounded-xl font-semibold shadow hover:bg-yellow-600">
-          Spin Now
-        </button>
       </div>
 
-      {/* Bottom 40% - Feature Buttons */}
-      <div className="flex-[0.4] bg-gray-100 px-4 py-6 flex flex-wrap gap-4 justify-center items-start rounded-t-3xl shadow-inner">
-        <Link to="/escrow" className="px-5 py-3 bg-purple-600 text-white rounded-lg shadow hover:bg-purple-700">
-          Escrow Trade
-        </Link>
-        <Link to="/buy" className="px-5 py-3 bg-yellow-600 text-white rounded-lg shadow hover:bg-yellow-700">
-          Buy (Card / USDT)
-        </Link>
-        <Link to="/mining" className="px-5 py-3 bg-red-600 text-white rounded-lg shadow hover:bg-red-700">
-          Free Mining
-        </Link>
-        <Link to="/signup" className="px-5 py-3 bg-green-600 text-white rounded-lg shadow hover:bg-green-700">
-          Get Started
-        </Link>
-      </div>
-    </main>
+      <button
+        onClick={spinWheel}
+        disabled={spinning}
+        className={`px-6 py-3 rounded-lg text-white font-semibold ${
+          spinning ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"
+        }`}
+      >
+        {spinning ? "Spinning..." : "Spin"}
+      </button>
+
+      {reward && (
+        <div className="mt-6 p-4 bg-green-100 text-green-800 font-semibold rounded-lg shadow-md">
+          🎉 You won: {reward}!
+        </div>
+      )}
+    </div>
   );
 }
