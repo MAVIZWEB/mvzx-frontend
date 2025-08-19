@@ -1,122 +1,179 @@
- import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
-type Reward = {
-  label: string;
-  value: number; // actual MVZx amount
-};
-
-const rewards: Reward[] = [
-  { label: "0.125 MVZx", value: 0.125 },
-  { label: "0.25 MVZx", value: 0.25 },
-  { label: "0.375 MVZx", value: 0.375 },
-  { label: "0.5 MVZx", value: 0.5 },
-  { label: "0.625 MVZx", value: 0.625 },
-  { label: "0.75 MVZx", value: 0.75 },
-  { label: "1 MVZx", value: 1 },
-  { label: "3× Free Reward", value: 0 }, // special case
+// Rewards list
+const rewards = [
+  "0.125 MVZx",
+  "0.25 MVZx",
+  "0.375 MVZx",
+  "0.5 MVZx",
+  "0.625 MVZx",
+  "0.75 MVZx",
+  "1 MVZx",
+  "3× Free Reward",
 ];
 
-export default function Game() {
-  const [spinning, setSpinning] = useState(false);
-  const [reward, setReward] = useState<Reward | null>(null);
-  const [rotation, setRotation] = useState(0);
-  const [balance, setBalance] = useState(0); // Token balance tracker
+// Helper: parse numeric reward value
+const getRewardValue = (reward: string): number => {
+  if (reward.includes("×")) return 0; // free spin multiplier, no direct tokens
+  return parseFloat(reward.split(" ")[0]);
+};
 
+export default function Game() {
+  // State
+  const [spinning, setSpinning] = useState(false);
+  const [reward, setReward] = useState<string | null>(null);
+  const [balance, setBalance] = useState<number>(0);
+  const [history, setHistory] = useState<{ reward: string; time: string }[]>([]);
+  const [spinsLeft, setSpinsLeft] = useState<number>(3);
+
+  // Load persistent data
+  useEffect(() => {
+    const savedBalance = localStorage.getItem("mvzx_balance");
+    const savedHistory = localStorage.getItem("mvzx_history");
+    const savedSpins = localStorage.getItem("mvzx_spinsLeft");
+    const lastSpinDate = localStorage.getItem("mvzx_spinDate");
+
+    if (savedBalance) setBalance(parseFloat(savedBalance));
+    if (savedHistory) setHistory(JSON.parse(savedHistory));
+    if (savedSpins && lastSpinDate === new Date().toDateString()) {
+      setSpinsLeft(parseInt(savedSpins));
+    } else {
+      // reset daily spins
+      setSpinsLeft(3);
+      localStorage.setItem("mvzx_spinDate", new Date().toDateString());
+    }
+  }, []);
+
+  // Save balance/history/spins persistently
+  useEffect(() => {
+    localStorage.setItem("mvzx_balance", balance.toString());
+  }, [balance]);
+
+  useEffect(() => {
+    localStorage.setItem("mvzx_history", JSON.stringify(history));
+  }, [history]);
+
+  useEffect(() => {
+    localStorage.setItem("mvzx_spinsLeft", spinsLeft.toString());
+    localStorage.setItem("mvzx_spinDate", new Date().toDateString());
+  }, [spinsLeft]);
+
+  // Spin action
   const spinWheel = () => {
-    if (spinning) return;
+    if (spinning || spinsLeft <= 0) return;
+
     setSpinning(true);
     setReward(null);
+    setSpinsLeft((prev) => prev - 1);
 
-    const randomIndex = Math.floor(Math.random() * rewards.length);
-    const selectedReward = rewards[randomIndex];
-    const sliceAngle = 360 / rewards.length;
-
-    const targetAngle =
-      360 * 5 + (360 - randomIndex * sliceAngle - sliceAngle / 2);
-
-    setRotation(targetAngle);
-
+    const spinDuration = 3000;
     setTimeout(() => {
+      const randomIndex = Math.floor(Math.random() * rewards.length);
+      const selectedReward = rewards[randomIndex];
       setReward(selectedReward);
 
-      if (selectedReward.value > 0) {
-        setBalance((prev) => prev + selectedReward.value);
+      if (selectedReward.includes("×")) {
+        // "3× Free Reward" = extra free spins
+        setSpinsLeft((prev) => prev + 3);
       } else {
-        // Handle "3x Free Reward" — give another spin automatically
-        spinWheel();
+        const value = getRewardValue(selectedReward);
+        setBalance((prev) => prev + value);
       }
 
+      // Save history
+      setHistory((prev) => [
+        { reward: selectedReward, time: new Date().toLocaleTimeString() },
+        ...prev.slice(0, 9), // keep last 10
+      ]);
+
       setSpinning(false);
-    }, 5000);
+    }, spinDuration);
+  };
+
+  // Reset balance
+  const resetBalance = () => {
+    setBalance(0);
+    setHistory([]);
+    setSpinsLeft(3);
+    localStorage.removeItem("mvzx_balance");
+    localStorage.removeItem("mvzx_history");
+    localStorage.removeItem("mvzx_spinsLeft");
+    localStorage.setItem("mvzx_spinDate", new Date().toDateString());
   };
 
   return (
-    <div className="flex flex-col items-center justify-center w-full h-[80vh] bg-gray-50 rounded-lg shadow-lg p-6">
-      <h2 className="text-2xl font-bold mb-4">🎰 Spin & Earn MVZx Tokens!</h2>
+    <div className="flex flex-col items-center justify-center w-full min-h-[80vh] bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg shadow-lg p-6">
+      <h2 className="text-3xl font-bold mb-4 text-blue-700">🎰 Spin & Earn MVZx</h2>
 
-      {/* Balance Tracker */}
-      <div className="mb-6 p-4 bg-purple-100 text-purple-800 font-semibold rounded-lg shadow-md">
-        💰 Your Balance: {balance.toFixed(3)} MVZx
+      {/* Balance */}
+      <div className="mb-6 text-center">
+        <p className="text-lg font-medium">Your Balance</p>
+        <p className="text-2xl font-bold text-green-600">{balance.toFixed(3)} MVZx</p>
+        <p className="text-sm text-gray-500">Daily Free Spins Left: {spinsLeft}</p>
       </div>
 
-      {/* Wheel container */}
-      <div className="relative w-72 h-72 mb-6">
-        {/* Wheel */}
-        <div
-          className="absolute w-full h-full rounded-full border-4 border-gray-300 transition-transform duration-[5s] ease-out"
-          style={{ transform: `rotate(${rotation}deg)` }}
+      {/* Wheel */}
+      <div className="relative w-64 h-64 mb-6">
+        <motion.div
+          animate={{ rotate: spinning ? 1080 : 0 }}
+          transition={{ duration: 3, ease: "easeInOut" }}
+          className="w-full h-full rounded-full border-8 border-yellow-400 flex items-center justify-center"
         >
-          {rewards.map((item, i) => {
-            const angle = (360 / rewards.length) * i;
-            const background =
-              i % 2 === 0 ? "bg-yellow-300" : "bg-blue-300";
-            return (
-              <div
-                key={i}
-                className={`absolute w-1/2 h-1/2 origin-bottom-left flex items-center justify-center text-xs font-semibold text-black ${background}`}
-                style={{
-                  transform: `rotate(${angle}deg) skewY(-${
-                    90 - 360 / rewards.length
-                  }deg)`,
-                  clipPath: "polygon(0% 0%, 100% 0%, 100% 100%)",
-                }}
-              >
-                <span
-                  className="text-center"
-                  style={{
-                    transform: `rotate(${90 - 360 / rewards.length / 2}deg)`,
-                    display: "block",
-                    width: "80px",
-                  }}
-                >
-                  {item.label}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Pointer */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-l-transparent border-r-transparent border-b-red-600"></div>
+          <span className="absolute text-center font-semibold text-lg">
+            {spinning ? "Spinning..." : "🎯"}
+          </span>
+        </motion.div>
       </div>
 
+      {/* Spin Button */}
       <button
         onClick={spinWheel}
-        disabled={spinning}
-        className={`px-6 py-3 rounded-lg text-white font-semibold ${
-          spinning
+        disabled={spinning || spinsLeft <= 0}
+        className={`px-6 py-3 rounded-lg text-white font-semibold mb-6 ${
+          spinning || spinsLeft <= 0
             ? "bg-gray-400 cursor-not-allowed"
-            : "bg-green-600 hover:bg-green-700"
+            : "bg-blue-600 hover:bg-blue-700"
         }`}
       >
-        {spinning ? "Spinning..." : "Spin"}
+        {spinning ? "Spinning..." : spinsLeft > 0 ? "Spin Now" : "No Spins Left"}
       </button>
 
-      {reward && reward.value > 0 && (
-        <div className="mt-6 p-4 bg-green-100 text-green-800 font-semibold rounded-lg shadow-md">
-          🎉 You earned: {reward.label}!
-        </div>
+      {/* Reward Message */}
+      {reward && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="mt-4 p-4 bg-green-100 text-green-800 font-semibold rounded-lg shadow-md"
+        >
+          🎉 You won: {reward}!
+        </motion.div>
       )}
+
+      {/* History */}
+      <div className="mt-8 w-full max-w-md bg-white rounded-lg shadow-md p-4">
+        <h3 className="text-lg font-bold mb-2">Recent Rewards</h3>
+        {history.length === 0 ? (
+          <p className="text-gray-500">No spins yet.</p>
+        ) : (
+          <ul className="space-y-1 text-sm">
+            {history.map((h, i) => (
+              <li key={i} className="flex justify-between">
+                <span>{h.reward}</span>
+                <span className="text-gray-500">{h.time}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Reset button */}
+      <button
+        onClick={resetBalance}
+        className="mt-6 px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg"
+      >
+        Reset Balance (Test Only)
+      </button>
     </div>
   );
 }
