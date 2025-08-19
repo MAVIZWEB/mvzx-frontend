@@ -1,7 +1,4 @@
  import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { fetchSpinReward } from "../api";
-import { toast } from "react-hot-toast";
 
 const prizes = [
   { label: "10 MVZx", value: 10 },
@@ -12,33 +9,40 @@ const prizes = [
   { label: "500 MVZx", value: 500 },
 ];
 
+// Mock API call for spin reward
+async function fetchSpinReward() {
+  const prizeIndex = Math.floor(Math.random() * prizes.length);
+  return { amount: prizes[prizeIndex].value };
+}
+
 const PrizeWheel: React.FC<{ onWin?: (amount: number) => void }> = ({ onWin }) => {
   const [spinning, setSpinning] = useState(false);
   const [angle, setAngle] = useState(0);
+  const [message, setMessage] = useState("");
 
   const spin = async () => {
     if (spinning) return;
     setSpinning(true);
+    setMessage("");
 
     try {
       const res = await fetchSpinReward();
       const wonAmount = res.amount || 0;
 
-      const prizeIndex = prizes.findIndex(p => p.value === wonAmount);
+      const prizeIndex = prizes.findIndex((p) => p.value === wonAmount);
       const sectorAngle = 360 / prizes.length;
       const randomOffset = Math.floor(Math.random() * sectorAngle);
       const targetAngle = 360 * 5 + prizeIndex * sectorAngle + randomOffset;
 
-      setAngle(prev => prev + targetAngle);
+      setAngle((prev) => prev + targetAngle);
 
       setTimeout(() => {
-        toast.success(`🎉 You won ${wonAmount} MVZx!`);
+        setMessage(`🎉 You won ${wonAmount} MVZx!`);
         onWin?.(wonAmount);
         setSpinning(false);
       }, 5500);
-
-    } catch (err: any) {
-      toast.error("Spin failed. Try again.");
+    } catch (err) {
+      setMessage("⚠ Spin failed. Try again.");
       setSpinning(false);
     }
   };
@@ -46,13 +50,12 @@ const PrizeWheel: React.FC<{ onWin?: (amount: number) => void }> = ({ onWin }) =
   return (
     <div className="flex flex-col items-center gap-4">
       <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-gray-300 shadow-lg">
-        <motion.div
-          className="w-full h-full bg-gradient-to-tr from-yellow-300 to-red-400 flex items-center justify-center rounded-full text-xl font-bold text-gray-800"
-          animate={{ rotate: angle }}
-          transition={{ duration: 5, ease: "easeOut" }}
+        <div
+          className="w-full h-full bg-gradient-to-tr from-yellow-300 to-red-400 flex items-center justify-center rounded-full text-xl font-bold text-gray-800 transition-transform duration-[5500ms] ease-out"
+          style={{ transform: `rotate(${angle}deg)` }}
         >
           🎡
-        </motion.div>
+        </div>
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-16 border-b-red-600"></div>
       </div>
 
@@ -65,6 +68,8 @@ const PrizeWheel: React.FC<{ onWin?: (amount: number) => void }> = ({ onWin }) =
       >
         {spinning ? "Spinning…" : "Spin & Win MVZx"}
       </button>
+
+      {message && <div className="mt-2 text-center font-semibold">{message}</div>}
     </div>
   );
 };
