@@ -1,167 +1,125 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
-
-type User = { wallet: string; email?: string; pin: string } | null;
+import { initCardPayment, transferUSDT } from "../lib/api";
+import MatrixStatus from "../components/MatrixStatus";
 
 export default function Buy() {
-  const [user, setUser] = useState<User>(() => {
-    const raw = localStorage.getItem("mvzx_user");
-    return raw ? JSON.parse(raw) : null;
-  });
-
-  const [showSignupPrompt, setShowSignupPrompt] = useState(false);
-  const [amount, setAmount] = useState<number>(2000); // Naira default for stage1 example
-  const [currency, setCurrency] = useState<"NGN" | "USDT">("NGN");
-  const [bankRef, setBankRef] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [depositor, setDepositor] = useState("");
-
-  function requireSignup(next: () => void) {
-    if (!user) {
-      setShowSignupPrompt(true);
-      return;
-    }
-    next();
-  }
-
-  async function startCardCheckout() {
-    requireSignup(async () => {
-      // placeholder API call to backend to create checkout session
-      const api = import.meta.env.VITE_API_BASE_URL || "";
-      try {
-        const res = await fetch(`${api}/api/payments/checkout`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ amount, currency, wallet: user!.wallet, email: user!.email }),
-        });
-        const j = await res.json();
-        alert("Checkout initiated (placeholder). Backend response: " + (j.message || JSON.stringify(j)));
-      } catch (err) {
-        console.error(err);
-        alert("Checkout failed (placeholder). See console.");
-      }
-    });
-  }
-
-  async function submitManualDeposit(e: React.FormEvent) {
-    e.preventDefault();
-    requireSignup(async () => {
-      const api = import.meta.env.VITE_API_BASE_URL || "";
-      try {
-        const payload = { amount, currency, bankName, depositor, bankRef, wallet: user!.wallet, email: user!.email };
-        const res = await fetch(`${api}/api/deposits/manual`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        const j = await res.json();
-        alert("Deposit submitted. Admin will review. Response: " + (j.message || JSON.stringify(j)));
-      } catch (err) {
-        console.error(err);
-        alert("Deposit submit failed (placeholder).");
-      }
-    });
-  }
-
-  function onSaveSignup(data: any) {
-    localStorage.setItem("mvzx_user", JSON.stringify(data));
-    setUser(data);
-    setShowSignupPrompt(false);
-    alert("Signup saved locally.");
-  }
+  const [tab, setTab] = useState<"usdt"|"card">("usdt");
+  const [userId, setUserId] = useState<string>(() => localStorage.getItem("mvzx_user") || "demo-user");
 
   return (
-    <div className="min-h-screen flex items-start justify-center py-12 px-4">
-      <div className="w-full max-w-3xl space-y-6">
-        <div className="bg-white p-6 rounded shadow">
-          <h2 className="text-2xl font-bold">Buy MVZx</h2>
-          <p className="text-sm text-gray-600 mb-4">Choose to buy via Card/USDT checkout or submit a manual bank deposit for admin approval.</p>
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Buy MVZx</h1>
+      <p className="text-gray-600">1 MVZX = 0.15 USDT = ₦200. Minimum purchase = 1.5 USDT / ₦2,000. Multiples only count for matrix positions.</p>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-4 border rounded">
-              <h3 className="font-semibold">Card / USDT Checkout</h3>
-              <div className="mt-3">
-                <label className="block text-sm mb-1">Amount</label>
-                <input type="number" className="w-full border rounded px-3 py-2 mb-2" value={amount} onChange={e => setAmount(Number(e.target.value))} />
-                <label className="block text-sm mb-1">Currency</label>
-                <select className="w-full border rounded px-3 py-2 mb-2" value={currency} onChange={e => setCurrency(e.target.value as any)}>
-                  <option value="NGN">NGN</option>
-                  <option value="USDT">USDT</option>
-                </select>
-                <button onClick={startCardCheckout} className="w-full bg-yellow-600 text-white py-2 rounded">Proceed to Checkout</button>
-              </div>
-            </div>
-
-            <div className="p-4 border rounded">
-              <h3 className="font-semibold">Manual Bank Deposit (Admin Approval)</h3>
-              <form onSubmit={submitManualDeposit} className="mt-3">
-                <label className="block text-sm mb-1">Depositor Name</label>
-                <input className="w-full border rounded px-3 py-2 mb-2" value={depositor} onChange={e => setDepositor(e.target.value)} />
-                <label className="block text-sm mb-1">Bank Name</label>
-                <input className="w-full border rounded px-3 py-2 mb-2" value={bankName} onChange={e => setBankName(e.target.value)} />
-                <label className="block text-sm mb-1">Bank Reference</label>
-                <input className="w-full border rounded px-3 py-2 mb-3" value={bankRef} onChange={e => setBankRef(e.target.value)} />
-                <button type="submit" className="w-full bg-indigo-600 text-white py-2 rounded">Submit Deposit</button>
-              </form>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded shadow">
-          <h3 className="font-semibold">Account</h3>
-          <div className="mt-3">
-            {user ? (
-              <div className="text-sm text-gray-700">
-                <div>Wallet: <code>{user.wallet}</code></div>
-                <div>Email: {user.email || "—"}</div>
-                <div className="mt-2">
-                  <button className="bg-red-500 text-white px-3 py-1 rounded" onClick={() => { localStorage.removeItem("mvzx_user"); setUser(null); alert("Signed out locally."); }}>
-                    Sign out
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="text-sm">
-                Not signed up. <button className="text-blue-600 underline" onClick={() => setShowSignupPrompt(true)}>Quick signup</button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="text-center">
-          <Link to="/" className="text-blue-600 hover:underline">Back Home</Link>
-        </div>
+      <div className="flex gap-2">
+        <button className={`tab ${tab==="usdt"?"tab-active":""}`} onClick={()=>setTab("usdt")}>USDT (BEP-20)</button>
+        <button className={`tab ${tab==="card"?"tab-active":""}`} onClick={()=>setTab("card")}>Card / Flutterwave</button>
       </div>
 
-      {showSignupPrompt && (
-        <SignupModal onSave={onSaveSignup} onClose={() => setShowSignupPrompt(false)} />
-      )}
+      {tab === "usdt" ? <USDTForm userId={userId}/> : <CardForm userId={userId}/>}
+
+      <MatrixStatus userId={userId} />
     </div>
   );
 }
 
-function SignupModal({ onSave, onClose }: { onSave: (d: any) => void; onClose: () => void }) {
-  const [wallet, setWallet] = useState("");
-  const [email, setEmail] = useState("");
-  const [pin, setPin] = useState("");
+function USDTForm({ userId }: { userId: string }) {
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState(""); // platform wallet A shown to user
+  const [amountUSDT, setAmountUSDT] = useState<number>(1.5);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr(null); setMsg(null);
+    if (amountUSDT < 1.5) { setErr("Minimum is 1.5 USDT."); return; }
+    try {
+      setBusy(true);
+      // Backend will verify multiples logic & assign matrix positions
+      const r = await transferUSDT({ fromAddress: from, toAddress: to, amountUSDT });
+      setMsg(`Transfer submitted. TxId: ${r.txId}. Matrix placement will update shortly.`);
+    } catch (e:any) {
+      setErr(e.message);
+    } finally { setBusy(false); }
+  };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4">
-      <div className="bg-white p-5 rounded w-full max-w-md">
-        <h3 className="font-semibold mb-3">Quick Signup</h3>
-        <label className="block text-sm">Wallet Address</label>
-        <input className="w-full border rounded px-3 py-2 mb-2" value={wallet} onChange={e => setWallet(e.target.value)} placeholder="0x..." />
-        <label className="block text-sm">Email</label>
-        <input className="w-full border rounded px-3 py-2 mb-2" value={email} onChange={e => setEmail(e.target.value)} />
-        <label className="block text-sm">4-digit PIN</label>
-        <input className="w-full border rounded px-3 py-2 mb-3" maxLength={4} value={pin} onChange={e => setPin(e.target.value)} />
-        <div className="flex gap-3">
-          <button className="flex-1 bg-green-600 text-white py-2 rounded" onClick={() => { if (!wallet || pin.length !== 4) { alert("Provide wallet and 4-digit PIN"); return; } onSave({ wallet, email, pin }); }}>
-            Save & Continue
-          </button>
-          <button className="flex-1 border rounded py-2" onClick={onClose}>Cancel</button>
-        </div>
+    <form onSubmit={submit} className="bg-white rounded-xl shadow p-5 space-y-4">
+      <div className="grid md:grid-cols-3 gap-4">
+        <Field label="From (your BEP-20 USDT address)">
+          <input className="input" placeholder="0x..." value={from} onChange={e=>setFrom(e.target.value)} />
+        </Field>
+        <Field label="To (platform wallet A)">
+          <input className="input" placeholder="0xPlatformWalletA" value={to} onChange={e=>setTo(e.target.value)} />
+        </Field>
+        <Field label="Amount (USDT)">
+          <input type="number" min={1.5} step="0.75" className="input" value={amountUSDT} onChange={e=>setAmountUSDT(parseFloat(e.target.value || "0"))}/>
+          <p className="text-xs text-gray-500 mt-1">Multiples of 1.5 USDT recommended for matrix positions.</p>
+        </Field>
       </div>
+
+      {err && <div className="p-3 bg-red-100 text-red-700 rounded">{err}</div>}
+      {msg && <div className="p-3 bg-green-100 text-green-700 rounded">{msg}</div>}
+
+      <button disabled={busy} className={`px-5 py-2 rounded text-white ${busy ? "bg-gray-400" : "bg-green-600 hover:bg-green-700"}`}>
+        {busy ? "Processing…" : "Send USDT & Credit MVZx"}
+      </button>
+    </form>
+  );
+}
+
+function CardForm({ userId }: { userId: string }) {
+  const [amountNGN, setAmountNGN] = useState(2000);
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const init = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErr(null);
+    if (amountNGN < 2000 || amountNGN % 2000 !== 0) {
+      setErr("Amount must be ₦2,000 or a multiple of ₦2,000.");
+      return;
+    }
+    try {
+      setBusy(true);
+      const { checkoutUrl } = await initCardPayment({ userId, amountNGN, email, phone });
+      window.location.href = checkoutUrl; // redirect to Flutterwave
+    } catch (e:any) {
+      setErr(e.message);
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={init} className="bg-white rounded-xl shadow p-5 space-y-4">
+      <div className="grid md:grid-cols-3 gap-4">
+        <Field label="Amount (NGN)">
+          <input type="number" min={2000} step={2000} className="input" value={amountNGN} onChange={e=>setAmountNGN(parseInt(e.target.value || "0",10))}/>
+        </Field>
+        <Field label="Email">
+          <input type="email" className="input" value={email} onChange={e=>setEmail(e.target.value)} />
+        </Field>
+        <Field label="Phone (+234…)">
+          <input className="input" value={phone} onChange={e=>setPhone(e.target.value)} />
+        </Field>
+      </div>
+      {err && <div className="p-3 bg-red-100 text-red-700 rounded">{err}</div>}
+      <button disabled={busy} className={`px-5 py-2 rounded text-white ${busy ? "bg-gray-400" : "bg-indigo-600 hover:bg-indigo-700"}`}>
+        {busy ? "Redirecting…" : "Pay with Card (Flutterwave)"}
+      </button>
+    </form>
+  );
+}
+
+function Field({label, children}:{label:string;children:React.ReactNode}) {
+  return (
+    <div>
+      <label className="text-sm text-gray-600">{label}</label>
+      {children}
     </div>
   );
 }
