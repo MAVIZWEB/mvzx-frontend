@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import Airdrop from "./airdrop";
+ import React, { useState } from "react";
+import Airdrop from "./Airdrop";
 import Buy from "./Buy";
 import Signup from "./Signup";
 import Escrow from "./Escrow";
@@ -7,26 +7,22 @@ import ManualDeposit from "./ManualDeposit";
 import Mining from "./Mining";
 import Voting from "./Voting";
 import PrizeWheel from "../components/PrizeWheel";
-import Game from "./Game";
+import { toast } from "react-hot-toast";
 
-const Dashboard: React.FC = () => {
+const Dashboard = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [userBalance, setUserBalance] = useState<number>(0); // MVZx balance
-  const [leaderboardKey, setLeaderboardKey] = useState(0); // refresh leaderboard on spin
-  const userId = localStorage.getItem("mvzx_user") || "demo-user";
+  const [balance, setBalance] = useState(0);
 
-  const openModal = (name: string) => setActiveModal(name);
+  const openModal = (modalName: string) => setActiveModal(modalName);
   const closeModal = () => setActiveModal(null);
 
-  const handleReward = (amount: number) => {
-    setUserBalance(prev => prev + amount);
-    setLeaderboardKey(prev => prev + 1); // force leaderboard refresh
+  const handleWin = (amount: number) => {
+    setBalance(prev => prev + amount);
+    toast.success(`Balance updated: ${balance + amount} MVZx`);
   };
 
   return (
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
-
-      {/* Top: Description + Airdrop */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-gray-800">MVZx — Instant Spin & Earn</h1>
         <p className="text-gray-600 text-lg">Buy, Mine, Trade, Vote</p>
@@ -38,20 +34,11 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Middle: Prize Wheel + Leaderboard */}
       <div className="flex flex-col items-center space-y-6">
-        <PrizeWheel
-          userId={userId}
-          onReward={handleReward}
-        />
-        <p className="text-gray-600">Spin daily, earn instantly!</p>
-
-        <div className="w-full max-w-4xl">
-          <Game key={leaderboardKey} />
-        </div>
+        <PrizeWheel onWin={handleWin} />
+        <p className="text-gray-600">Your Balance: {balance} MVZx</p>
       </div>
 
-      {/* Action Buttons */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <button onClick={() => openModal("buy")} className="p-4 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition">Buy MVZx Earn Cash</button>
         <button onClick={() => openModal("airdrop")} className="p-4 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition">Airdrop</button>
@@ -62,29 +49,6 @@ const Dashboard: React.FC = () => {
         <button onClick={() => openModal("voting")} className="p-4 bg-teal-500 text-white rounded-lg shadow hover:bg-teal-600 transition">Voting</button>
       </div>
 
-      {/* Bottom Dashboard Preview */}
-      <div className="bg-white p-6 rounded-lg shadow-md mt-6 max-w-4xl mx-auto">
-        <h2 className="text-xl font-bold mb-4">Your Dashboard Preview</h2>
-        <div className="flex justify-between flex-wrap gap-4">
-          <div className="p-4 bg-gray-100 rounded-lg w-40 text-center">
-            <p className="text-gray-500 text-sm">Badge</p>
-            <p className="font-bold text-lg">Bronze</p>
-          </div>
-          <div className="p-4 bg-gray-100 rounded-lg w-40 text-center">
-            <p className="text-gray-500 text-sm">Stage Progress</p>
-            <p className="font-bold text-lg">Stage 1 / 5</p>
-          </div>
-          <div className="p-4 bg-gray-100 rounded-lg w-40 text-center">
-            <p className="text-gray-500 text-sm">Wallet</p>
-            <p className="font-bold text-lg">{userBalance.toFixed(2)} MVZx</p>
-          </div>
-        </div>
-        <div className="mt-4 text-right">
-          <button className="text-blue-600 font-semibold hover:underline">View Full Dashboard →</button>
-        </div>
-      </div>
-
-      {/* Modal */}
       {activeModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg w-full max-w-5xl relative overflow-y-auto max-h-[90vh]">
