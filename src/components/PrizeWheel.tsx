@@ -1,4 +1,4 @@
- import React, { useState } from "react";
+import React, { useState } from "react";
 import { useBalance } from "../context/BalanceContext";
 
 const prizes = [0, 0.5, 1, 2, 5];
