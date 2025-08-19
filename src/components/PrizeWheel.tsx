@@ -1,69 +1,76 @@
+// src/components/PrizeWheel.tsx
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { fetchSpinReward } from "../services/api";
+import { fetchSpinReward } from "../api"; // <-- correct path
+import { toast } from "react-hot-toast";
 
-const segments = [10, 20, 50, 100, 200, 500]; // MVZx rewards
+const prizes = [
+  { label: "10 MVZx", value: 10 },
+  { label: "20 MVZx", value: 20 },
+  { label: "50 MVZx", value: 50 },
+  { label: "100 MVZx", value: 100 },
+  { label: "200 MVZx", value: 200 },
+  { label: "500 MVZx", value: 500 },
+];
 
-export default function PrizeWheel({ userId, onReward }: { userId: string; onReward: (amount: number) => void }) {
+const PrizeWheel: React.FC<{ onWin?: (amount: number) => void }> = ({ onWin }) => {
   const [spinning, setSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
+  const [angle, setAngle] = useState(0);
 
   const spin = async () => {
     if (spinning) return;
     setSpinning(true);
 
     try {
-      // Get reward from backend
-      const reward = await fetchSpinReward(userId);
+      // Call backend to get prize
+      const res = await fetchSpinReward();
+      const wonAmount = res.amount || 0;
 
-      // Calculate random segment rotation
-      const segmentIndex = segments.indexOf(reward);
-      const randomOffset = Math.random() * (360 / segments.length);
-      const segmentRotation = segmentIndex * (360 / segments.length) + randomOffset;
+      // Calculate random rotation to land on prize
+      const prizeIndex = prizes.findIndex(p => p.value === wonAmount);
+      const sectorAngle = 360 / prizes.length;
+      const randomOffset = Math.floor(Math.random() * sectorAngle);
+      const targetAngle = 360 * 5 + prizeIndex * sectorAngle + randomOffset;
 
-      // Total rotations (e.g., 5 spins + landing on reward)
-      const totalRotation = 360 * 5 + segmentRotation;
-      setRotation(prev => prev + totalRotation);
+      setAngle(prev => prev + targetAngle);
 
-      // Delay until animation ends (~5s)
+      // Wait animation
       setTimeout(() => {
-        onReward(reward);
+        toast.success(`🎉 You won ${wonAmount} MVZx!`);
+        onWin?.(wonAmount); // update balance/leaderboard
         setSpinning(false);
-      }, 5000);
-    } catch (err) {
-      console.error(err);
-      alert("Spin failed. Try again.");
+      }, 5500); // match animation duration
+    } catch (err: any) {
+      toast.error("Spin failed. Try again.");
       setSpinning(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center">
-      <motion.div
-        animate={{ rotate: rotation }}
-        transition={{ duration: 5, ease: "easeOut" }}
-        className="w-64 h-64 rounded-full border-8 border-gray-300 flex items-center justify-center relative bg-gradient-to-tr from-purple-400 to-indigo-500 shadow-lg"
-      >
-        {segments.map((seg, i) => (
-          <div
-            key={i}
-            className="absolute w-1/2 h-1/2 top-0 left-1/2 origin-bottom-left text-white font-bold text-sm flex items-center justify-center"
-            style={{ transform: `rotate(${(360 / segments.length) * i}deg)` }}
-          >
-            {seg}
-          </div>
-        ))}
-      </motion.div>
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-gray-300 shadow-lg">
+        <motion.div
+          className="w-full h-full bg-gradient-to-tr from-yellow-300 to-red-400 flex items-center justify-center rounded-full text-xl font-bold text-gray-800"
+          animate={{ rotate: angle }}
+          transition={{ duration: 5, ease: "easeOut" }}
+        >
+          🎡
+        </motion.div>
+        {/* Pointer */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-16 border-b-red-600"></div>
+      </div>
 
       <button
         onClick={spin}
         disabled={spinning}
-        className={`mt-4 px-6 py-3 rounded-full font-bold text-white shadow-lg ${
-          spinning ? "bg-gray-400" : "bg-yellow-500 hover:bg-yellow-600"
-        }`}
+        className={`mt-4 px-6 py-3 font-bold rounded-lg text-white ${
+          spinning ? "bg-gray-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
+        } transition`}
       >
-        {spinning ? "Spinning…" : "Spin Now"}
+        {spinning ? "Spinning…" : "Spin & Win MVZx"}
       </button>
     </div>
   );
-}
+};
+
+export default PrizeWheel;
