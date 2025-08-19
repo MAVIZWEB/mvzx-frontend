@@ -1,7 +1,6 @@
-// src/components/PrizeWheel.tsx
-import React, { useState } from "react";
+ import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { fetchSpinReward } from "../api"; // <-- correct path
+import { fetchSpinReward } from "../api";
 import { toast } from "react-hot-toast";
 
 const prizes = [
@@ -22,11 +21,9 @@ const PrizeWheel: React.FC<{ onWin?: (amount: number) => void }> = ({ onWin }) =
     setSpinning(true);
 
     try {
-      // Call backend to get prize
       const res = await fetchSpinReward();
       const wonAmount = res.amount || 0;
 
-      // Calculate random rotation to land on prize
       const prizeIndex = prizes.findIndex(p => p.value === wonAmount);
       const sectorAngle = 360 / prizes.length;
       const randomOffset = Math.floor(Math.random() * sectorAngle);
@@ -34,12 +31,12 @@ const PrizeWheel: React.FC<{ onWin?: (amount: number) => void }> = ({ onWin }) =
 
       setAngle(prev => prev + targetAngle);
 
-      // Wait animation
       setTimeout(() => {
         toast.success(`🎉 You won ${wonAmount} MVZx!`);
-        onWin?.(wonAmount); // update balance/leaderboard
+        onWin?.(wonAmount);
         setSpinning(false);
-      }, 5500); // match animation duration
+      }, 5500);
+
     } catch (err: any) {
       toast.error("Spin failed. Try again.");
       setSpinning(false);
@@ -56,7 +53,6 @@ const PrizeWheel: React.FC<{ onWin?: (amount: number) => void }> = ({ onWin }) =
         >
           🎡
         </motion.div>
-        {/* Pointer */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-16 border-b-red-600"></div>
       </div>
 
