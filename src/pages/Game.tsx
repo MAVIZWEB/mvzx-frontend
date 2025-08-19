@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
 
-// Rewards list
 const rewards = [
   "0.125 MVZx",
   "0.25 MVZx",
@@ -13,59 +11,59 @@ const rewards = [
   "3× Free Reward",
 ];
 
-// Helper: parse numeric reward value
-const getRewardValue = (reward: string): number => {
-  if (reward.includes("×")) return 0; // free spin multiplier, no direct tokens
-  return parseFloat(reward.split(" ")[0]);
+// Function to return badge tier based on balance
+const getBadge = (balance: number) => {
+  if (balance >= 100) return { tier: "🌟 Legend", color: "text-yellow-600" };
+  if (balance >= 50) return { tier: "💎 Diamond", color: "text-blue-600" };
+  if (balance >= 25) return { tier: "🔮 Platinum", color: "text-purple-600" };
+  if (balance >= 10) return { tier: "🥇 Gold", color: "text-amber-500" };
+  if (balance >= 5) return { tier: "🥈 Silver", color: "text-gray-500" };
+  if (balance >= 1) return { tier: "🥉 Bronze", color: "text-orange-500" };
+  return { tier: "Newbie", color: "text-gray-400" };
 };
 
 export default function Game() {
-  // State
   const [spinning, setSpinning] = useState(false);
   const [reward, setReward] = useState<string | null>(null);
   const [balance, setBalance] = useState<number>(0);
-  const [history, setHistory] = useState<{ reward: string; time: string }[]>([]);
-  const [spinsLeft, setSpinsLeft] = useState<number>(3);
+  const [localPlayers, setLocalPlayers] = useState<{ name: string; balance: number }[]>([]);
+  const [globalPlayers, setGlobalPlayers] = useState<{ name: string; balance: number }[]>([]);
 
-  // Load persistent data
+  // Load balance from localStorage
   useEffect(() => {
     const savedBalance = localStorage.getItem("mvzx_balance");
-    const savedHistory = localStorage.getItem("mvzx_history");
-    const savedSpins = localStorage.getItem("mvzx_spinsLeft");
-    const lastSpinDate = localStorage.getItem("mvzx_spinDate");
-
-    if (savedBalance) setBalance(parseFloat(savedBalance));
-    if (savedHistory) setHistory(JSON.parse(savedHistory));
-    if (savedSpins && lastSpinDate === new Date().toDateString()) {
-      setSpinsLeft(parseInt(savedSpins));
-    } else {
-      // reset daily spins
-      setSpinsLeft(3);
-      localStorage.setItem("mvzx_spinDate", new Date().toDateString());
+    if (savedBalance) {
+      setBalance(parseFloat(savedBalance));
     }
   }, []);
 
-  // Save balance/history/spins persistently
+  // Update both leaderboards whenever balance changes
   useEffect(() => {
-    localStorage.setItem("mvzx_balance", balance.toString());
+    const mockLocal = [
+      { name: "Alice", balance: 15.75 },
+      { name: "Bob", balance: 9.5 },
+      { name: "Charlie", balance: 7.25 },
+      { name: "Diana", balance: 5.0 },
+      { name: "You", balance: balance },
+    ];
+
+    const mockGlobal = [
+      { name: "CryptoKing", balance: 250.0 },
+      { name: "Whale42", balance: 175.0 },
+      { name: "MVZxMax", balance: 120.0 },
+      { name: "TokenTiger", balance: 80.0 },
+      { name: "LuckySpin", balance: 40.0 },
+      { name: "You", balance: balance },
+    ];
+
+    setLocalPlayers(mockLocal.sort((a, b) => b.balance - a.balance));
+    setGlobalPlayers(mockGlobal.sort((a, b) => b.balance - a.balance));
   }, [balance]);
 
-  useEffect(() => {
-    localStorage.setItem("mvzx_history", JSON.stringify(history));
-  }, [history]);
-
-  useEffect(() => {
-    localStorage.setItem("mvzx_spinsLeft", spinsLeft.toString());
-    localStorage.setItem("mvzx_spinDate", new Date().toDateString());
-  }, [spinsLeft]);
-
-  // Spin action
   const spinWheel = () => {
-    if (spinning || spinsLeft <= 0) return;
-
+    if (spinning) return;
     setSpinning(true);
     setReward(null);
-    setSpinsLeft((prev) => prev - 1);
 
     const spinDuration = 3000;
     setTimeout(() => {
@@ -73,107 +71,136 @@ export default function Game() {
       const selectedReward = rewards[randomIndex];
       setReward(selectedReward);
 
-      if (selectedReward.includes("×")) {
-        // "3× Free Reward" = extra free spins
-        setSpinsLeft((prev) => prev + 3);
+      let rewardValue = 0;
+      if (selectedReward.includes("× Free Reward")) {
+        rewardValue = 0.25; // Example bonus reward
       } else {
-        const value = getRewardValue(selectedReward);
-        setBalance((prev) => prev + value);
+        rewardValue = parseFloat(selectedReward);
       }
 
-      // Save history
-      setHistory((prev) => [
-        { reward: selectedReward, time: new Date().toLocaleTimeString() },
-        ...prev.slice(0, 9), // keep last 10
-      ]);
+      const newBalance = balance + rewardValue;
+      setBalance(newBalance);
+      localStorage.setItem("mvzx_balance", newBalance.toString());
+
+      console.log(`Mock: ${selectedReward} added. New balance: ${newBalance} MVZx`);
 
       setSpinning(false);
     }, spinDuration);
   };
 
-  // Reset balance
-  const resetBalance = () => {
-    setBalance(0);
-    setHistory([]);
-    setSpinsLeft(3);
-    localStorage.removeItem("mvzx_balance");
-    localStorage.removeItem("mvzx_history");
-    localStorage.removeItem("mvzx_spinsLeft");
-    localStorage.setItem("mvzx_spinDate", new Date().toDateString());
-  };
+  const badge = getBadge(balance);
 
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-[80vh] bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg shadow-lg p-6">
-      <h2 className="text-3xl font-bold mb-4 text-blue-700">🎰 Spin & Earn MVZx</h2>
+    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
+      {/* Game Header */}
+      <h2 className="text-3xl font-bold mb-4 text-purple-700">🎰 Spin & Earn MVZx Tokens!</h2>
 
-      {/* Balance */}
-      <div className="mb-6 text-center">
-        <p className="text-lg font-medium">Your Balance</p>
-        <p className="text-2xl font-bold text-green-600">{balance.toFixed(3)} MVZx</p>
-        <p className="text-sm text-gray-500">Daily Free Spins Left: {spinsLeft}</p>
+      {/* Balance + Badge */}
+      <div className="mb-6 p-4 bg-yellow-100 border border-yellow-300 rounded-lg shadow-md text-center">
+        <div className="text-lg font-semibold text-gray-800">
+          💰 Your Balance: {balance.toFixed(3)} MVZx
+        </div>
+        <div className={`mt-2 text-xl font-bold ${badge.color}`}>
+          {badge.tier}
+        </div>
       </div>
 
-      {/* Wheel */}
+      {/* Spin Wheel */}
       <div className="relative w-64 h-64 mb-6">
-        <motion.div
-          animate={{ rotate: spinning ? 1080 : 0 }}
-          transition={{ duration: 3, ease: "easeInOut" }}
-          className="w-full h-full rounded-full border-8 border-yellow-400 flex items-center justify-center"
+        <div
+          className={`w-full h-full rounded-full border-8 border-yellow-400 flex items-center justify-center transition-transform duration-[3s] ${
+            spinning ? "rotate-[1080deg]" : ""
+          }`}
         >
           <span className="absolute text-center font-semibold text-lg">
-            {spinning ? "Spinning..." : "🎯"}
+            {spinning ? "Spinning..." : "🎡"}
           </span>
-        </motion.div>
+        </div>
       </div>
 
       {/* Spin Button */}
       <button
         onClick={spinWheel}
-        disabled={spinning || spinsLeft <= 0}
-        className={`px-6 py-3 rounded-lg text-white font-semibold mb-6 ${
-          spinning || spinsLeft <= 0
+        disabled={spinning}
+        className={`px-6 py-3 rounded-lg text-white font-semibold ${
+          spinning
             ? "bg-gray-400 cursor-not-allowed"
-            : "bg-blue-600 hover:bg-blue-700"
+            : "bg-purple-600 hover:bg-purple-700 shadow-md"
         }`}
       >
-        {spinning ? "Spinning..." : spinsLeft > 0 ? "Spin Now" : "No Spins Left"}
+        {spinning ? "Spinning..." : "Spin"}
       </button>
 
-      {/* Reward Message */}
+      {/* Reward Notification */}
       {reward && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="mt-4 p-4 bg-green-100 text-green-800 font-semibold rounded-lg shadow-md"
-        >
+        <div className="mt-6 p-4 bg-green-100 text-green-800 font-semibold rounded-lg shadow-md">
           🎉 You won: {reward}!
-        </motion.div>
+        </div>
       )}
 
-      {/* History */}
-      <div className="mt-8 w-full max-w-md bg-white rounded-lg shadow-md p-4">
-        <h3 className="text-lg font-bold mb-2">Recent Rewards</h3>
-        {history.length === 0 ? (
-          <p className="text-gray-500">No spins yet.</p>
-        ) : (
-          <ul className="space-y-1 text-sm">
-            {history.map((h, i) => (
-              <li key={i} className="flex justify-between">
-                <span>{h.reward}</span>
-                <span className="text-gray-500">{h.time}</span>
-              </li>
+      {/* Local Leaderboard */}
+      <div className="mt-12 w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
+        <h3 className="bg-purple-600 text-white text-center py-3 text-xl font-bold">
+          🏆 Local Leaderboard
+        </h3>
+        <table className="w-full text-left">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="px-4 py-2">Rank</th>
+              <th className="px-4 py-2">Player</th>
+              <th className="px-4 py-2">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {localPlayers.map((player, i) => (
+              <tr
+                key={i}
+                className={`border-t ${
+                  player.name === "You" ? "bg-yellow-100 font-semibold" : "bg-white"
+                }`}
+              >
+                <td className="px-4 py-2">{i + 1}</td>
+                <td className="px-4 py-2">{player.name}</td>
+                <td className="px-4 py-2">{player.balance.toFixed(3)} MVZx</td>
+              </tr>
             ))}
-          </ul>
-        )}
+          </tbody>
+        </table>
       </div>
 
-      {/* Reset button */}
-      <button
-        onClick={resetBalance}
-        className="mt-6 px-4 py-2 text-sm bg-red-500 hover:bg-red-600 text-white rounded-lg"
-      >
-        Reset Balance (Test Only)
-      </button>
+      {/* Global Leaderboard */}
+      <div className="mt-12 w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
+        <h3 className="bg-blue-600 text-white text-center py-3 text-xl font-bold">
+          🌍 Global Leaderboard
+        </h3>
+        <table className="w-full text-left">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="px-4 py-2">Rank</th>
+              <th className="px-4 py-2">Player</th>
+              <th className="px-4 py-2">Balance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {globalPlayers.map((player, i) => (
+              <tr
+                key={i}
+                className={`border-t ${
+                  player.name === "You" ? "bg-green-100 font-semibold" : "bg-white"
+                }`}
+              >
+                <td className="px-4 py-2">{i + 1}</td>
+                <td className="px-4 py-2">{player.name}</td>
+                <td className="px-4 py-2">{player.balance.toFixed(3)} MVZx</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <p className="mt-4 text-gray-500 text-sm">
+        (Leaderboards currently mock data — will sync with backend later)
+      </p>
     </div>
   );
 }
