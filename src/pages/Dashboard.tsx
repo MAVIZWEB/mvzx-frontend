@@ -1,4 +1,4 @@
- import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Airdrop from "./airdrop";
 import Buy from "./Buy";
 import Signup from "./Signup";
@@ -6,29 +6,27 @@ import Escrow from "./Escrow";
 import ManualDeposit from "./ManualDeposit";
 import Mining from "./Mining";
 import Voting from "./Voting";
-import Game from "./Game"; // Leaderboard/Game component
 import PrizeWheel from "../components/PrizeWheel";
+import Game from "./Game";
 
-export default function Dashboard() {
+const Dashboard: React.FC = () => {
   const [activeModal, setActiveModal] = useState<string | null>(null);
-  const [userBalance, setUserBalance] = useState<number>(() => {
-    const saved = localStorage.getItem("mvzx_balance");
-    return saved ? parseFloat(saved) : 0;
-  });
+  const [userBalance, setUserBalance] = useState<number>(0); // MVZx balance
+  const [leaderboardKey, setLeaderboardKey] = useState(0); // refresh leaderboard on spin
+  const userId = localStorage.getItem("mvzx_user") || "demo-user";
 
-  const [userId] = useState<string>(() => localStorage.getItem("mvzx_user") || "demo-user");
-
-  useEffect(() => {
-    localStorage.setItem("mvzx_balance", userBalance.toString());
-  }, [userBalance]);
-
-  const openModal = (modalName: string) => setActiveModal(modalName);
+  const openModal = (name: string) => setActiveModal(name);
   const closeModal = () => setActiveModal(null);
+
+  const handleReward = (amount: number) => {
+    setUserBalance(prev => prev + amount);
+    setLeaderboardKey(prev => prev + 1); // force leaderboard refresh
+  };
 
   return (
     <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
-      
-      {/* Top Section */}
+
+      {/* Top: Description + Airdrop */}
       <div className="text-center space-y-4">
         <h1 className="text-4xl font-bold text-gray-800">MVZx — Instant Spin & Earn</h1>
         <p className="text-gray-600 text-lg">Buy, Mine, Trade, Vote</p>
@@ -40,16 +38,16 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Middle Section: Wheel + Leaderboard */}
+      {/* Middle: Prize Wheel + Leaderboard */}
       <div className="flex flex-col items-center space-y-6">
         <PrizeWheel
           userId={userId}
-          onReward={(amount) => setUserBalance(prev => prev + amount)}
+          onReward={handleReward}
         />
-        <p className="text-gray-600">Your balance: <span className="font-bold">{userBalance.toFixed(3)} MVZx</span></p>
+        <p className="text-gray-600">Spin daily, earn instantly!</p>
 
         <div className="w-full max-w-4xl">
-          <Game />
+          <Game key={leaderboardKey} />
         </div>
       </div>
 
@@ -64,7 +62,7 @@ export default function Dashboard() {
         <button onClick={() => openModal("voting")} className="p-4 bg-teal-500 text-white rounded-lg shadow hover:bg-teal-600 transition">Voting</button>
       </div>
 
-      {/* Dashboard Preview */}
+      {/* Bottom Dashboard Preview */}
       <div className="bg-white p-6 rounded-lg shadow-md mt-6 max-w-4xl mx-auto">
         <h2 className="text-xl font-bold mb-4">Your Dashboard Preview</h2>
         <div className="flex justify-between flex-wrap gap-4">
@@ -78,7 +76,7 @@ export default function Dashboard() {
           </div>
           <div className="p-4 bg-gray-100 rounded-lg w-40 text-center">
             <p className="text-gray-500 text-sm">Wallet</p>
-            <p className="font-bold text-lg">{userBalance.toFixed(3)} MVZx</p>
+            <p className="font-bold text-lg">{userBalance.toFixed(2)} MVZx</p>
           </div>
         </div>
         <div className="mt-4 text-right">
@@ -86,12 +84,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Modal Section */}
+      {/* Modal */}
       {activeModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white p-6 rounded-lg w-full max-w-5xl relative overflow-y-auto max-h-[90vh]">
             <button className="absolute top-2 right-2 text-gray-500 hover:text-gray-700" onClick={closeModal}>✖</button>
-
             {activeModal === "airdrop" && <Airdrop />}
             {activeModal === "buy" && <Buy />}
             {activeModal === "signup" && <Signup />}
@@ -104,4 +101,6 @@ export default function Dashboard() {
       )}
     </div>
   );
-}
+};
+
+export default Dashboard;
