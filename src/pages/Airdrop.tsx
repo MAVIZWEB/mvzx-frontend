@@ -1,140 +1,63 @@
-// src/pages/Dashboard.tsx
+// src/pages/Airdrop.tsx
 import React, { useState } from "react";
-import Airdrop from "./airdrop";
-import Buy from "./Buy";
-import Signup from "./Signup";
-import Escrow from "./Escrow";
-import ManualDeposit from "./ManualDeposit";
-import Mining from "./Mining";
-import Voting from "./Voting";
-import Game from "./Game"; // Leaderboard/Game component
+import { toast } from "react-hot-toast";
 
-const Dashboard = () => {
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+const Airdrop: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [claimed, setClaimed] = useState(false);
 
-  const openModal = (modalName: string) => setActiveModal(modalName);
-  const closeModal = () => setActiveModal(null);
+  const handleClaim = async () => {
+    if (loading || claimed) return;
+    setLoading(true);
+
+    try {
+      // TODO: Replace with real API call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      setClaimed(true);
+      toast.success("🎁 Airdrop claimed! MVZx credited to your wallet.");
+    } catch (err) {
+      toast.error("Failed to claim airdrop. Try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="p-6 space-y-8 bg-gray-50 min-h-screen">
-      
-      {/* Top Section: Description & Airdrop Banner */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-gray-800">MVZx — Instant Spin & Earn</h1>
-        <p className="text-gray-600 text-lg">Buy, Mine, Trade, Vote</p>
-        <div
-          className="bg-yellow-300 text-gray-800 font-semibold p-4 rounded-lg shadow-md cursor-pointer hover:bg-yellow-400 transition"
-          onClick={() => openModal("airdrop")}
-        >
-          🎁 Instant Airdrop — Claim Now!
-        </div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800">🎁 MVZx Airdrop</h2>
+      <p className="text-gray-600">
+        Get free MVZx tokens instantly!  
+        Connect your wallet and click claim to receive your airdrop.
+      </p>
+
+      <div className="p-6 border rounded-xl bg-gradient-to-r from-green-50 to-green-100 shadow">
+        {claimed ? (
+          <div className="text-center">
+            <p className="text-lg font-semibold text-green-700">✅ You’ve claimed your airdrop!</p>
+            <p className="text-gray-600 mt-2">Check your balance in the dashboard.</p>
+          </div>
+        ) : (
+          <button
+            onClick={handleClaim}
+            disabled={loading}
+            className={`px-6 py-3 rounded-lg font-bold text-white transition ${
+              loading
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {loading ? "Claiming..." : "Claim Airdrop"}
+          </button>
+        )}
       </div>
 
-      {/* Middle Section: Game Spinner + Leaderboard */}
-      <div className="flex flex-col items-center space-y-6">
-        {/* Game Spinner */}
-        <div className="w-64 h-64 bg-gray-200 rounded-full flex items-center justify-center text-4xl">
-          🎡 Spin & Earn
-        </div>
-        <p className="text-gray-600">Spin daily, earn instantly!</p>
-
-        {/* Leaderboard */}
-        <div className="w-full max-w-4xl">
-          <Game />
-        </div>
+      <div className="text-sm text-gray-500">
+        * Limited to one claim per wallet.  
+        * Rewards credited instantly to your account.
       </div>
-
-      {/* Action Buttons Section */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        <button
-          onClick={() => openModal("buy")}
-          className="p-4 bg-blue-500 text-white rounded-lg shadow hover:bg-blue-600 transition"
-        >
-          Buy MVZx Earn Cash
-        </button>
-        <button
-          onClick={() => openModal("airdrop")}
-          className="p-4 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
-        >
-          Airdrop
-        </button>
-        <button
-          onClick={() => openModal("signup")}
-          className="p-4 bg-purple-500 text-white rounded-lg shadow hover:bg-purple-600 transition"
-        >
-          Sign Up
-        </button>
-        <button
-          onClick={() => openModal("escrow")}
-          className="p-4 bg-orange-500 text-white rounded-lg shadow hover:bg-orange-600 transition"
-        >
-          Escrow P2P Trade
-        </button>
-        <button
-          onClick={() => openModal("manual")}
-          className="p-4 bg-pink-500 text-white rounded-lg shadow hover:bg-pink-600 transition"
-        >
-          Manual Transfer
-        </button>
-        <button
-          onClick={() => openModal("mining")}
-          className="p-4 bg-indigo-500 text-white rounded-lg shadow hover:bg-indigo-600 transition"
-        >
-          Mining
-        </button>
-        <button
-          onClick={() => openModal("voting")}
-          className="p-4 bg-teal-500 text-white rounded-lg shadow hover:bg-teal-600 transition"
-        >
-          Voting
-        </button>
-      </div>
-
-      {/* Bottom Section: User Dashboard Preview */}
-      <div className="bg-white p-6 rounded-lg shadow-md mt-6 max-w-4xl mx-auto">
-        <h2 className="text-xl font-bold mb-4">Your Dashboard Preview</h2>
-        <div className="flex justify-between flex-wrap gap-4">
-          <div className="p-4 bg-gray-100 rounded-lg w-40 text-center">
-            <p className="text-gray-500 text-sm">Badge</p>
-            <p className="font-bold text-lg">Bronze</p>
-          </div>
-          <div className="p-4 bg-gray-100 rounded-lg w-40 text-center">
-            <p className="text-gray-500 text-sm">Stage Progress</p>
-            <p className="font-bold text-lg">Stage 1 / 5</p>
-          </div>
-          <div className="p-4 bg-gray-100 rounded-lg w-40 text-center">
-            <p className="text-gray-500 text-sm">Wallet</p>
-            <p className="font-bold text-lg">0 MVZx</p>
-          </div>
-        </div>
-        <div className="mt-4 text-right">
-          <button className="text-blue-600 font-semibold hover:underline">View Full Dashboard →</button>
-        </div>
-      </div>
-
-      {/* Modal Section */}
-      {activeModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white p-6 rounded-lg w-full max-w-5xl relative overflow-y-auto max-h-[90vh]">
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              onClick={closeModal}
-            >
-              ✖
-            </button>
-
-            {activeModal === "airdrop" && <Airdrop />}
-            {activeModal === "buy" && <Buy />}
-            {activeModal === "signup" && <Signup />}
-            {activeModal === "escrow" && <Escrow />}
-            {activeModal === "manual" && <ManualDeposit />}
-            {activeModal === "mining" && <Mining />}
-            {activeModal === "voting" && <Voting />}
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default Dashboard;
+export default Airdrop;
