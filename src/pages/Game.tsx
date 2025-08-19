@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { fetchMatrixStatus, MatrixStatus } from "../services/matrixService";
 
 interface Player {
   id: string;
@@ -13,31 +12,13 @@ const Game: React.FC = () => {
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    async function loadPlayers() {
-      try {
-        // Example: load 5 test users
-        const userIds = ["u1", "u2", "u3", "u4", "u5"];
-        const results = await Promise.all(
-          userIds.map((id) => fetchMatrixStatus(id))
-        );
-
-        const mapped = results.map((res, index) => ({
-          id: res.userId,
-          name: `User ${index + 1}`,
-          points: res.earningsSoFar, // use earnings as points
-          stage: res.stage,
-        }));
-
-        // Sort by points descending
-        mapped.sort((a, b) => b.points - a.points);
-
-        setPlayers(mapped);
-      } catch (err) {
-        console.error("Failed to load players:", err);
-      }
-    }
-
-    loadPlayers();
+    // Fake demo players
+    const fake = [
+      { id: "1", name: "User 1", points: 900, stage: 2 },
+      { id: "2", name: "User 2", points: 600, stage: 1 },
+      { id: "3", name: "User 3", points: 300, stage: 1 },
+    ];
+    setPlayers(fake);
   }, []);
 
   const getBadgeClass = (points: number) => {
