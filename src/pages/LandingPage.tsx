@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+ import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PrizeWheel from "../components/PrizeWheel";
 
@@ -6,10 +6,9 @@ const LandingPage: React.FC = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("maviz_token");
 
-  // Guard: restrict features if not signed in
   const requireAuth = (path: string) => {
     if (!token) {
-      navigate("/signup"); // redirect to signup page
+      navigate("/signup");
     } else {
       navigate(path);
     }
@@ -20,9 +19,9 @@ const LandingPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-between bg-gradient-to-b from-red-900 via-red-800 to-red-950 text-white font-sans relative overflow-hidden">
+    <div className="min-h-screen flex flex-col items-center justify-between relative overflow-hidden">
       {/* Glassy overlay */}
-      <div className="absolute inset-0 backdrop-blur-md bg-white/10"></div>
+      <div className="absolute inset-0 backdrop-blur-md bg-white/5"></div>
 
       {/* Header with Logo */}
       <header className="z-10 w-full flex items-center justify-center py-2">
@@ -35,7 +34,7 @@ const LandingPage: React.FC = () => {
 
       {/* Tagline */}
       <div className="z-10 text-center px-3">
-        <h1 className="text-lg md:text-2xl font-bold tracking-wide text-cream-100 drop-shadow">
+        <h1 className="text-lg md:text-2xl font-bold tracking-wide">
           MVZx — Instant Spin & Earn
         </h1>
         <p className="text-sm opacity-80">Buy • Mine • Trade • Vote</p>
@@ -43,12 +42,12 @@ const LandingPage: React.FC = () => {
 
       {/* Prize Wheel */}
       <div className="z-10 flex justify-center items-center my-2 w-full">
-        <div className="w-64 h-64 sm:w-72 sm:h-72 bg-white/10 rounded-full shadow-inner backdrop-blur-lg flex items-center justify-center">
+        <div className="w-64 h-64 sm:w-72 sm:h-72 glass-card flex items-center justify-center">
           <PrizeWheel />
         </div>
       </div>
 
-      {/* Buttons Section */}
+      {/* Buttons */}
       <div className="z-10 grid grid-cols-2 gap-3 px-4 w-full max-w-md mb-4">
         <button
           onClick={() => requireAuth("/buy")}
