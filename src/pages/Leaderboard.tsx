@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react";
+ import React, { useEffect, useState } from "react";
+import { useBalance } from "../context/BalanceContext";
 
 type Player = {
   name: string;
@@ -6,26 +7,21 @@ type Player = {
 };
 
 export default function Leaderboard() {
+  const { balance } = useBalance();
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    // Get your current balance from localStorage
-    const savedBalance = localStorage.getItem("mvzx_balance");
-    const myBalance = savedBalance ? parseFloat(savedBalance) : 0;
-
-    // Mock other players + insert YOU
     const mockPlayers: Player[] = [
       { name: "Alice", balance: 15.75 },
       { name: "Bob", balance: 9.5 },
       { name: "Charlie", balance: 7.25 },
       { name: "Diana", balance: 5.0 },
-      { name: "You", balance: myBalance },
+      { name: "You", balance: balance },
     ];
 
-    // Sort descending
     const sorted = mockPlayers.sort((a, b) => b.balance - a.balance);
     setPlayers(sorted);
-  }, []);
+  }, [balance]); // re-run whenever your balance changes
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[100vh] w-full bg-gradient-to-b from-cream via-white to-red-50 p-6">
