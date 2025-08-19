@@ -1,38 +1,54 @@
 import React, { useState } from "react";
-import { useBalance } from "../context/BalanceContext";
 
-const prizes = [0, 0.5, 1, 2, 5];
+type PrizeWheelProps = {
+  onRequireSignup?: () => void;
+};
 
-export default function PrizeWheel() {
-  const { balance, setBalance } = useBalance();
+const prizes = ["1 MVZx", "2 MVZx", "Try Again", "5 MVZx", "10 MVZx"];
+
+export default function PrizeWheel({ onRequireSignup }: PrizeWheelProps) {
   const [spinning, setSpinning] = useState(false);
-  const [result, setResult] = useState<number | null>(null);
+  const [result, setResult] = useState<string | null>(null);
 
-  const spinWheel = () => {
+  const spin = () => {
+    const user = localStorage.getItem("mvzx_user");
+    if (!user) {
+      onRequireSignup?.();
+      return;
+    }
+
     if (spinning) return;
     setSpinning(true);
-    const prize = prizes[Math.floor(Math.random() * prizes.length)];
+    setResult(null);
+
+    const audio = new Audio("https://www.myinstants.com/media/sounds/wheel-spin.mp3");
+    audio.play();
+
     setTimeout(() => {
-      setBalance(balance + prize);
+      const prize = prizes[Math.floor(Math.random() * prizes.length)];
       setResult(prize);
       setSpinning(false);
-    }, 2000);
+
+      if (prize !== "Try Again") {
+        const savedBalance = localStorage.getItem("mvzx_balance");
+        const balance = savedBalance ? parseFloat(savedBalance) : 0;
+        const reward = parseFloat(prize.split(" ")[0]);
+        localStorage.setItem("mvzx_balance", (balance + reward).toString());
+      }
+    }, 4000);
   };
 
   return (
     <div className="flex flex-col items-center">
-      <button
-        onClick={spinWheel}
-        disabled={spinning}
-        className="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-3 rounded-full shadow-lg font-bold transition"
+      <div
+        className={`w-48 h-48 rounded-full border-[10px] border-white flex items-center justify-center text-xl font-bold transition-all ${
+          spinning ? "animate-spin-slow" : ""
+        }`}
+        onClick={spin}
       >
-        {spinning ? "Spinning..." : "🎡 Spin Wheel"}
-      </button>
-      {result !== null && (
-        <p className="mt-3 text-sm text-gray-800 bg-white px-3 py-1 rounded shadow">
-          You won {result} MVZx!
-        </p>
-      )}
+        🎡
+      </div>
+      {result && <p className="mt-3 text-lg">{result}</p>}
     </div>
   );
 }
