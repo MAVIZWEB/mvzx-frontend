@@ -1,27 +1,45 @@
- import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { fetchMatrixStatus, MatrixStatus } from "../services/matrixService";
 
 interface Player {
-  id: number;
+  id: string;
   name: string;
   points: number;
+  stage: number;
 }
 
 const Game: React.FC = () => {
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    // Mock leaderboard data (replace with backend API later)
-    setPlayers([
-      { id: 1, name: "Alice", points: 1200 },
-      { id: 2, name: "Bob", points: 950 },
-      { id: 3, name: "Charlie", points: 720 },
-      { id: 4, name: "Diana", points: 500 },
-      { id: 5, name: "Ethan", points: 300 },
-    ]);
+    async function loadPlayers() {
+      try {
+        // Example: load 5 test users
+        const userIds = ["u1", "u2", "u3", "u4", "u5"];
+        const results = await Promise.all(
+          userIds.map((id) => fetchMatrixStatus(id))
+        );
+
+        const mapped = results.map((res, index) => ({
+          id: res.userId,
+          name: `User ${index + 1}`,
+          points: res.earningsSoFar, // use earnings as points
+          stage: res.stage,
+        }));
+
+        // Sort by points descending
+        mapped.sort((a, b) => b.points - a.points);
+
+        setPlayers(mapped);
+      } catch (err) {
+        console.error("Failed to load players:", err);
+      }
+    }
+
+    loadPlayers();
   }, []);
 
-  // Determine badge class based on points
   const getBadgeClass = (points: number) => {
     if (points >= 1000) return "badge-diamond";
     if (points >= 800) return "badge-platinum";
@@ -32,9 +50,7 @@ const Game: React.FC = () => {
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-center mb-6">
-        🏆 Leaderboard
-      </h1>
+      <h1 className="text-2xl font-bold text-center mb-6">🏆 Leaderboard</h1>
 
       <div className="grid gap-4">
         {players.map((player, index) => (
@@ -46,12 +62,8 @@ const Game: React.FC = () => {
             transition={{ delay: index * 0.1 }}
           >
             <div className="flex items-center justify-between">
-              {/* Global Rank */}
-              <span className="font-bold text-lg text-gray-700">
-                #{index + 1}
-              </span>
+              <span className="font-bold text-lg text-gray-700">#{index + 1}</span>
 
-              {/* Player Info */}
               <div className="flex items-center gap-3">
                 <div className={`badge ${getBadgeClass(player.points)}`}>
                   {player.name.charAt(0)}
@@ -59,12 +71,11 @@ const Game: React.FC = () => {
                 <div>
                   <p className="font-semibold">{player.name}</p>
                   <p className="text-sm text-gray-500">
-                    {player.points} pts
+                    {player.points} pts | Stage {player.stage}
                   </p>
                 </div>
               </div>
 
-              {/* Badge Label */}
               <span
                 className={`text-xs font-bold uppercase px-2 py-1 rounded ${getBadgeClass(
                   player.points
