@@ -1,70 +1,34 @@
- import React from "react";
-import { Routes, Route, Link } from "react-router-dom";
-
-// Import all pages from src/pages
-import Home from "./pages/Home";
-import Buy from "./pages/Buy";
-import Escrow from "./pages/Escrow";
-import Mining from "./pages/Mining";
+ import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
 import Game from "./pages/Game";
-import ManualDeposit from "./pages/ManualDeposit";
 
-export default function App() {
+function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* Header / Navbar */}
-      <header className="bg-white shadow-md py-4 px-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          {/* Logo */}
-          <img
-            src="https://i.imgur.com/VbxvCK6.jpeg"
-            alt="Maviz Logo"
-            className="h-10 w-auto"
-          />
-          <span className="font-bold text-xl">MAVIZ (MVZx)</span>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex gap-4">
-          <Link to="/" className="hover:text-blue-600 font-medium">
-            Home
-          </Link>
-          <Link to="/buy" className="hover:text-blue-600 font-medium">
-            Buy
-          </Link>
-          <Link to="/escrow" className="hover:text-blue-600 font-medium">
-            Escrow
-          </Link>
-          <Link to="/mining" className="hover:text-blue-600 font-medium">
-            Free Mining
-          </Link>
-          <Link to="/game" className="hover:text-blue-600 font-medium">
-            Spin & Win
-          </Link>
-          <Link to="/manual-deposit" className="hover:text-blue-600 font-medium">
-            Manual Deposit
-          </Link>
-        </nav>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-grow">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/buy" element={<Buy />} />
-          <Route path="/escrow" element={<Escrow />} />
-          <Route path="/mining" element={<Mining />} />
-          <Route path="/game" element={<Game />} />
-          <Route path="/manual-deposit" element={<ManualDeposit />} />
-        </Routes>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-100 text-center py-4 mt-auto">
-        <p className="text-gray-600 text-sm">
-          &copy; {new Date().getFullYear()} MAVIZ (MVZx). All rights reserved.
-        </p>
-      </footer>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-cyan-400 to-blue-600 text-white">
+      <h1 className="text-4xl font-bold mb-6">Welcome to MVZx Platform</h1>
+      <p className="mb-8 text-lg">Mining • Escrow • Spin & Earn • Matrix Rewards</p>
+      <nav className="flex gap-6">
+        <Link to="/dashboard" className="px-6 py-3 bg-white text-blue-600 rounded-2xl shadow hover:scale-105 transition">
+          Dashboard
+        </Link>
+        <Link to="/game" className="px-6 py-3 bg-white text-blue-600 rounded-2xl shadow hover:scale-105 transition">
+          Spin & Earn
+        </Link>
+      </nav>
     </div>
   );
 }
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/game" element={<Game />} />
+      </Routes>
+    </Router>
+  );
+}
+
+export default App;
