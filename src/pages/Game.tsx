@@ -1,206 +1,83 @@
- import React, { useState, useEffect } from "react";
+ import React, { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 
-const rewards = [
-  "0.125 MVZx",
-  "0.25 MVZx",
-  "0.375 MVZx",
-  "0.5 MVZx",
-  "0.625 MVZx",
-  "0.75 MVZx",
-  "1 MVZx",
-  "3× Free Reward",
-];
+interface Player {
+  id: number;
+  name: string;
+  points: number;
+}
 
-// Function to return badge tier based on balance
-const getBadge = (balance: number) => {
-  if (balance >= 100) return { tier: "🌟 Legend", color: "text-yellow-600" };
-  if (balance >= 50) return { tier: "💎 Diamond", color: "text-blue-600" };
-  if (balance >= 25) return { tier: "🔮 Platinum", color: "text-purple-600" };
-  if (balance >= 10) return { tier: "🥇 Gold", color: "text-amber-500" };
-  if (balance >= 5) return { tier: "🥈 Silver", color: "text-gray-500" };
-  if (balance >= 1) return { tier: "🥉 Bronze", color: "text-orange-500" };
-  return { tier: "Newbie", color: "text-gray-400" };
-};
+const Game: React.FC = () => {
+  const [players, setPlayers] = useState<Player[]>([]);
 
-export default function Game() {
-  const [spinning, setSpinning] = useState(false);
-  const [reward, setReward] = useState<string | null>(null);
-  const [balance, setBalance] = useState<number>(0);
-  const [localPlayers, setLocalPlayers] = useState<{ name: string; balance: number }[]>([]);
-  const [globalPlayers, setGlobalPlayers] = useState<{ name: string; balance: number }[]>([]);
-
-  // Load balance from localStorage
   useEffect(() => {
-    const savedBalance = localStorage.getItem("mvzx_balance");
-    if (savedBalance) {
-      setBalance(parseFloat(savedBalance));
-    }
+    // Mock leaderboard data (replace with backend API later)
+    setPlayers([
+      { id: 1, name: "Alice", points: 1200 },
+      { id: 2, name: "Bob", points: 950 },
+      { id: 3, name: "Charlie", points: 720 },
+      { id: 4, name: "Diana", points: 500 },
+      { id: 5, name: "Ethan", points: 300 },
+    ]);
   }, []);
 
-  // Update both leaderboards whenever balance changes
-  useEffect(() => {
-    const mockLocal = [
-      { name: "Alice", balance: 15.75 },
-      { name: "Bob", balance: 9.5 },
-      { name: "Charlie", balance: 7.25 },
-      { name: "Diana", balance: 5.0 },
-      { name: "You", balance: balance },
-    ];
-
-    const mockGlobal = [
-      { name: "CryptoKing", balance: 250.0 },
-      { name: "Whale42", balance: 175.0 },
-      { name: "MVZxMax", balance: 120.0 },
-      { name: "TokenTiger", balance: 80.0 },
-      { name: "LuckySpin", balance: 40.0 },
-      { name: "You", balance: balance },
-    ];
-
-    setLocalPlayers(mockLocal.sort((a, b) => b.balance - a.balance));
-    setGlobalPlayers(mockGlobal.sort((a, b) => b.balance - a.balance));
-  }, [balance]);
-
-  const spinWheel = () => {
-    if (spinning) return;
-    setSpinning(true);
-    setReward(null);
-
-    const spinDuration = 3000;
-    setTimeout(() => {
-      const randomIndex = Math.floor(Math.random() * rewards.length);
-      const selectedReward = rewards[randomIndex];
-      setReward(selectedReward);
-
-      let rewardValue = 0;
-      if (selectedReward.includes("× Free Reward")) {
-        rewardValue = 0.25; // Example bonus reward
-      } else {
-        rewardValue = parseFloat(selectedReward);
-      }
-
-      const newBalance = balance + rewardValue;
-      setBalance(newBalance);
-      localStorage.setItem("mvzx_balance", newBalance.toString());
-
-      console.log(`Mock: ${selectedReward} added. New balance: ${newBalance} MVZx`);
-
-      setSpinning(false);
-    }, spinDuration);
+  // Determine badge class based on points
+  const getBadgeClass = (points: number) => {
+    if (points >= 1000) return "badge-diamond";
+    if (points >= 800) return "badge-platinum";
+    if (points >= 600) return "badge-gold";
+    if (points >= 400) return "badge-silver";
+    return "badge-bronze";
   };
 
-  const badge = getBadge(balance);
-
   return (
-    <div className="flex flex-col items-center justify-center w-full min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-6">
-      {/* Game Header */}
-      <h2 className="text-3xl font-bold mb-4 text-purple-700">🎰 Spin & Earn MVZx Tokens!</h2>
+    <div className="p-6 max-w-4xl mx-auto">
+      <h1 className="text-2xl font-bold text-center mb-6">
+        🏆 Leaderboard
+      </h1>
 
-      {/* Balance + Badge */}
-      <div className="mb-6 p-4 bg-yellow-100 border border-yellow-300 rounded-lg shadow-md text-center">
-        <div className="text-lg font-semibold text-gray-800">
-          💰 Your Balance: {balance.toFixed(3)} MVZx
-        </div>
-        <div className={`mt-2 text-xl font-bold ${badge.color}`}>
-          {badge.tier}
-        </div>
-      </div>
+      <div className="grid gap-4">
+        {players.map((player, index) => (
+          <motion.div
+            key={player.id}
+            className="leaderboard-card"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <div className="flex items-center justify-between">
+              {/* Global Rank */}
+              <span className="font-bold text-lg text-gray-700">
+                #{index + 1}
+              </span>
 
-      {/* Spin Wheel */}
-      <div className="relative w-64 h-64 mb-6">
-        <div
-          className={`w-full h-full rounded-full border-8 border-yellow-400 flex items-center justify-center transition-transform duration-[3s] ${
-            spinning ? "rotate-[1080deg]" : ""
-          }`}
-        >
-          <span className="absolute text-center font-semibold text-lg">
-            {spinning ? "Spinning..." : "🎡"}
-          </span>
-        </div>
-      </div>
+              {/* Player Info */}
+              <div className="flex items-center gap-3">
+                <div className={`badge ${getBadgeClass(player.points)}`}>
+                  {player.name.charAt(0)}
+                </div>
+                <div>
+                  <p className="font-semibold">{player.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {player.points} pts
+                  </p>
+                </div>
+              </div>
 
-      {/* Spin Button */}
-      <button
-        onClick={spinWheel}
-        disabled={spinning}
-        className={`px-6 py-3 rounded-lg text-white font-semibold ${
-          spinning
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-purple-600 hover:bg-purple-700 shadow-md"
-        }`}
-      >
-        {spinning ? "Spinning..." : "Spin"}
-      </button>
-
-      {/* Reward Notification */}
-      {reward && (
-        <div className="mt-6 p-4 bg-green-100 text-green-800 font-semibold rounded-lg shadow-md">
-          🎉 You won: {reward}!
-        </div>
-      )}
-
-      {/* Local Leaderboard */}
-      <div className="mt-12 w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
-        <h3 className="bg-purple-600 text-white text-center py-3 text-xl font-bold">
-          🏆 Local Leaderboard
-        </h3>
-        <table className="w-full text-left">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="px-4 py-2">Rank</th>
-              <th className="px-4 py-2">Player</th>
-              <th className="px-4 py-2">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {localPlayers.map((player, i) => (
-              <tr
-                key={i}
-                className={`border-t ${
-                  player.name === "You" ? "bg-yellow-100 font-semibold" : "bg-white"
-                }`}
+              {/* Badge Label */}
+              <span
+                className={`text-xs font-bold uppercase px-2 py-1 rounded ${getBadgeClass(
+                  player.points
+                )}`}
               >
-                <td className="px-4 py-2">{i + 1}</td>
-                <td className="px-4 py-2">{player.name}</td>
-                <td className="px-4 py-2">{player.balance.toFixed(3)} MVZx</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                {getBadgeClass(player.points).replace("badge-", "")}
+              </span>
+            </div>
+          </motion.div>
+        ))}
       </div>
-
-      {/* Global Leaderboard */}
-      <div className="mt-12 w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
-        <h3 className="bg-blue-600 text-white text-center py-3 text-xl font-bold">
-          🌍 Global Leaderboard
-        </h3>
-        <table className="w-full text-left">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="px-4 py-2">Rank</th>
-              <th className="px-4 py-2">Player</th>
-              <th className="px-4 py-2">Balance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {globalPlayers.map((player, i) => (
-              <tr
-                key={i}
-                className={`border-t ${
-                  player.name === "You" ? "bg-green-100 font-semibold" : "bg-white"
-                }`}
-              >
-                <td className="px-4 py-2">{i + 1}</td>
-                <td className="px-4 py-2">{player.name}</td>
-                <td className="px-4 py-2">{player.balance.toFixed(3)} MVZx</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <p className="mt-4 text-gray-500 text-sm">
-        (Leaderboards currently mock data — will sync with backend later)
-      </p>
     </div>
   );
-}
+};
+
+export default Game;
