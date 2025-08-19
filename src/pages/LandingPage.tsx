@@ -1,102 +1,113 @@
- import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import PrizeWheel from "../components/PrizeWheel";
+ import React, { useState, useEffect, useRef } from "react";
+import Leaderboard from "./Leaderboard";
+import { Volume2 } from "lucide-react";
 
-type LandingProps = {
-  user: { email: string; wallet: string } | null;
-  setUser: (u: { email: string; wallet: string }) => void;
-};
+const prizes = ["5 MVZx", "10 MVZx", "15 MVZx", "Try Again", "20 MVZx", "50 MVZx"];
 
-export default function LandingPage({ user, setUser }: LandingProps) {
-  const [showSignup, setShowSignup] = useState(false);
-  const [email, setEmail] = useState("");
-  const [pin, setPin] = useState("");
-  const navigate = useNavigate();
+export default function LandingPage() {
+  const [spinning, setSpinning] = useState(false);
+  const [result, setResult] = useState<string | null>(null);
+  const [rotation, setRotation] = useState(0);
+  const wheelRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
-  const handleSignup = () => {
-    if (!email || !pin) return;
-    const wallet = "MVZX-" + Math.random().toString(36).substring(2, 10).toUpperCase();
-    setUser({ email, wallet });
-    localStorage.setItem("mvzx_user", JSON.stringify({ email, wallet }));
-    setShowSignup(false);
-  };
+  const spinWheel = () => {
+    if (spinning) return;
+    setSpinning(true);
 
-  const handleProtectedAction = (path: string) => {
-    if (!user) {
-      setShowSignup(true);
-    } else {
-      navigate(path);
-    }
+    const prizeIndex = Math.floor(Math.random() * prizes.length);
+    const segmentAngle = 360 / prizes.length;
+    const endRotation = rotation + 360 * 3 + (prizeIndex * segmentAngle + segmentAngle / 2);
+
+    setRotation(endRotation);
+
+    setTimeout(() => {
+      setResult(prizes[prizeIndex]);
+      setSpinning(false);
+      if (prizes[prizeIndex] !== "Try Again") {
+        audioRef.current?.play(); // play clap sound
+      }
+    }, 4000);
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-b from-red-900 via-red-700 to-cream text-white flex flex-col items-center relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-ubaRed text-white">
       {/* Header */}
-      <header className="w-full flex justify-between items-center p-4">
-        <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="Logo" className="h-12 rounded-lg shadow-md" />
-        <button className="text-xl font-bold">☰</button>
+      <header className="flex items-center justify-between px-4 py-3 bg-ubaRed glass">
+        <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
+        <div className="text-center leading-tight">
+          <h1 className="text-xl font-bold tracking-wide">MAVIZ LIQUIDITY</h1>
+          <h2 className="text-lg font-semibold">BUY & EARN</h2>
+        </div>
+        <button className="btn btn-secondary">Sign In</button>
       </header>
 
-      {/* Description */}
-      <div className="text-center mt-2">
-        <h1 className="text-2xl font-extrabold">MVZx — Instant Spin & Earn</h1>
-        <p className="text-sm opacity-80">Buy, Mine, Trade, Vote and Win instantly!</p>
-      </div>
+      {/* Wheel Section */}
+      <main className="flex-1 flex flex-col items-center justify-center px-4">
+        <h3 className="text-2xl font-bold mb-2">INSTANT SPIN & EARN</h3>
 
-      {/* Prize Wheel */}
-      <div className="mt-4">
-        <PrizeWheel onRequireSignup={() => setShowSignup(true)} />
-      </div>
+        {/* Wheel wrapper */}
+        <div className="relative wheel-container glass">
+          {/* Arrow Indicator */}
+          <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 z-20">
+            <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-b-[24px] border-transparent border-b-yellow-400"></div>
+          </div>
 
-      {/* Buttons */}
-      <div className="grid grid-cols-3 gap-3 mt-4 w-full px-4">
-        {[
-          { label: "Buy MVZx", path: "/buy" },
-          { label: "Airdrop", path: "/airdrop" },
-          { label: "Sign Up", path: "/" },
-          { label: "Escrow Trade", path: "/escrow" },
-          { label: "Mining", path: "/mining" },
-          { label: "Voting", path: "/voting" },
-          { label: "Leaderboard", path: "/leaderboard" },
-        ].map((btn, i) => (
-          <button
-            key={i}
-            className="bg-white/20 backdrop-blur-md text-sm font-semibold rounded-xl py-3 px-2 hover:bg-white/30 transition shadow"
-            onClick={() => handleProtectedAction(btn.path)}
+          {/* Wheel */}
+          <div
+            ref={wheelRef}
+            className="w-64 h-64 rounded-full border-4 border-white flex items-center justify-center"
+            style={{
+              transform: `rotate(${rotation}deg)`,
+              transition: spinning ? "transform 4s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
+              background: `conic-gradient(
+                #fff 0deg 60deg,
+                #ffcccc 60deg 120deg,
+                #fff 120deg 180deg,
+                #ffcccc 180deg 240deg,
+                #fff 240deg 300deg,
+                #ffcccc 300deg 360deg
+              )`,
+            }}
           >
-            {btn.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Signup Modal */}
-      {showSignup && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-          <div className="bg-white text-black rounded-xl shadow-lg p-6 w-80">
-            <h2 className="text-lg font-bold mb-4">Sign Up</h2>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="border rounded-lg px-3 py-2 w-full mb-3"
-            />
-            <input
-              type="number"
-              placeholder="4-digit PIN"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              className="border rounded-lg px-3 py-2 w-full mb-3"
-            />
-            <button
-              onClick={handleSignup}
-              className="w-full bg-red-700 text-white py-2 rounded-lg hover:bg-red-800"
-            >
-              Create Wallet
-            </button>
+            <span className="text-lg font-bold text-ubaRed">SPIN</span>
           </div>
         </div>
-      )}
+
+        {/* Spin Button */}
+        <button
+          onClick={spinWheel}
+          className="btn btn-primary mt-4"
+          disabled={spinning}
+        >
+          {spinning ? "Spinning..." : "Spin Now"}
+        </button>
+
+        {/* Result */}
+        {result && (
+          <p className="mt-4 text-xl font-bold text-yellow-300">
+            🎉 You won: {result}
+          </p>
+        )}
+
+        {/* Feature Buttons */}
+        <div className="grid grid-cols-2 gap-3 mt-6 w-full max-w-sm">
+          <button className="btn btn-secondary">Direct Transfer Buy</button>
+          <button className="btn btn-secondary">Airdrop</button>
+          <button className="btn btn-secondary">Mining</button>
+          <button className="btn btn-secondary">Trade</button>
+          <button className="btn btn-secondary">Escrow</button>
+          <button className="btn btn-secondary">Game</button>
+        </div>
+      </main>
+
+      {/* Leaderboard Behind Wheel */}
+      <section className="glass mt-8 p-4">
+        <Leaderboard />
+      </section>
+
+      {/* Clap Sound */}
+      <audio ref={audioRef} src="/sounds/clap.mp3" preload="auto"></audio>
     </div>
   );
 }
