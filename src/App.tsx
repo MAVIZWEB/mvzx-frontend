@@ -1,16 +1,31 @@
- import React from "react";
-import { Routes, Route } from "react-router-dom";
+ import React, { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import LandingPage from "./pages/LandingPage";
 import Leaderboard from "./pages/Leaderboard";
-import { BalanceProvider } from "./context/BalanceContext";
+import PrizeWheel from "./components/PrizeWheel";
 
-export default function App() {
+function App() {
+  const [user, setUser] = useState<{ email: string; wallet: string } | null>(
+    null
+  );
+
   return (
-    <BalanceProvider>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-      </Routes>
-    </BalanceProvider>
+    <Routes>
+      <Route path="/" element={<LandingPage user={user} setUser={setUser} />} />
+      <Route
+        path="/leaderboard"
+        element={
+          user ? <Leaderboard /> : <Navigate to="/" replace />
+        }
+      />
+      <Route
+        path="/wheel"
+        element={
+          user ? <PrizeWheel /> : <Navigate to="/" replace />
+        }
+      />
+    </Routes>
   );
 }
+
+export default App;
