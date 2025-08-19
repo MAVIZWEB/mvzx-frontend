@@ -1,4 +1,5 @@
- // vite.config.ts
+import { defineConfig } from 'vite';
+// vite.config.ts
 export default defineConfig({
   server: {
     proxy: {
