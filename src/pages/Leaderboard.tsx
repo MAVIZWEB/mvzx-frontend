@@ -9,30 +9,31 @@ export default function Leaderboard() {
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    // For now, leaderboard is local (mock data + your balance from localStorage)
+    // Get your current balance from localStorage
     const savedBalance = localStorage.getItem("mvzx_balance");
     const myBalance = savedBalance ? parseFloat(savedBalance) : 0;
 
+    // Mock other players + insert YOU
     const mockPlayers: Player[] = [
       { name: "Alice", balance: 15.75 },
       { name: "Bob", balance: 9.5 },
       { name: "Charlie", balance: 7.25 },
       { name: "Diana", balance: 5.0 },
-      { name: "You", balance: myBalance }, // Your balance inserted here
+      { name: "You", balance: myBalance },
     ];
 
-    // Sort by highest balance
+    // Sort descending
     const sorted = mockPlayers.sort((a, b) => b.balance - a.balance);
     setPlayers(sorted);
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] w-full bg-gradient-to-b from-gray-50 to-gray-100 p-6 rounded-lg shadow-md">
-      <h2 className="text-3xl font-bold mb-6 text-purple-700">🏆 MVZx Leaderboard</h2>
+    <div className="flex flex-col items-center justify-center min-h-[100vh] w-full bg-gradient-to-b from-cream via-white to-red-50 p-6">
+      <h2 className="text-3xl font-bold mb-6 text-red-700 drop-shadow">🏆 MVZx Leaderboard</h2>
 
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="w-full max-w-md bg-white/80 backdrop-blur rounded-xl shadow-lg overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-purple-600 text-white">
+          <thead className="bg-red-600 text-white">
             <tr>
               <th className="px-4 py-2">Rank</th>
               <th className="px-4 py-2">Player</th>
@@ -44,7 +45,9 @@ export default function Leaderboard() {
               <tr
                 key={i}
                 className={`border-t ${
-                  player.name === "You" ? "bg-yellow-100 font-semibold" : "bg-white"
+                  player.name === "You"
+                    ? "bg-yellow-100 font-semibold"
+                    : "bg-white/70"
                 }`}
               >
                 <td className="px-4 py-2">{i + 1}</td>
@@ -57,7 +60,7 @@ export default function Leaderboard() {
       </div>
 
       <p className="mt-4 text-gray-500 text-sm">
-        (Mock leaderboard — later we’ll sync this with backend global data.)
+        (Mock leaderboard — will sync with backend later.)
       </p>
     </div>
   );
