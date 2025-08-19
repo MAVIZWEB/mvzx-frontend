@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+ import React, { useState } from "react";
 import Airdrop from "./Airdrop";
 import Buy from "./Buy";
 import Signup from "./Signup";
