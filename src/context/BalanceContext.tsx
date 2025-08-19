@@ -16,7 +16,7 @@ export const BalanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     setBalance(savedBalance ? parseFloat(savedBalance) : 0);
   }, []);
 
-  // Persist whenever it changes
+  // Save whenever it changes
   useEffect(() => {
     localStorage.setItem("mvzx_balance", balance.toString());
   }, [balance]);
