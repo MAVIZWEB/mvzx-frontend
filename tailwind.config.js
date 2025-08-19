@@ -1,24 +1,11 @@
-/** @type {import('tailwindcss').Config} */
-export default {
-  content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
-  ],
+ /** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
       colors: {
-        cream: "#fdf6e3",   // soft cream
-        ubaRed: "#b30000",  // deep red
-        ubaWine: "#7b001c", // wine tone
-      },
-      fontFamily: {
-        sans: ["Inter", "ui-sans-serif", "system-ui"], // clean look
-      },
-      boxShadow: {
-        glass: "0 4px 30px rgba(0, 0, 0, 0.1)",
-      },
-      backdropBlur: {
-        xs: "2px",
+        cream: "#fdf6e3",
+        "glassy-red": "rgba(220,38,38,0.85)", // red-600 with transparency
       },
     },
   },
