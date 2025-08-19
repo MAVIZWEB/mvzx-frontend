@@ -11,17 +11,38 @@ export default function Leaderboard() {
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    const mockPlayers: Player[] = [
-      { name: "Alice", balance: 15.75 },
-      { name: "Bob", balance: 9.5 },
-      { name: "Charlie", balance: 7.25 },
-      { name: "Diana", balance: 5.0 },
-      { name: "You", balance: balance },
-    ];
+    // Load from localStorage
+    const saved = localStorage.getItem("mvzx_leaderboard");
+    let leaderboard: Player[];
 
-    const sorted = mockPlayers.sort((a, b) => b.balance - a.balance);
+    if (saved) {
+      leaderboard = JSON.parse(saved);
+    } else {
+      leaderboard = [
+        { name: "Alice", balance: 15.75 },
+        { name: "Bob", balance: 9.5 },
+        { name: "Charlie", balance: 7.25 },
+        { name: "Diana", balance: 5.0 },
+        { name: "You", balance: balance },
+      ];
+    }
+
+    // Update your entry
+    const updated = leaderboard.map((p) =>
+      p.name === "You" ? { ...p, balance } : p
+    );
+
+    // Ensure "You" exists
+    if (!updated.some((p) => p.name === "You")) {
+      updated.push({ name: "You", balance });
+    }
+
+    // Sort
+    const sorted = updated.sort((a, b) => b.balance - a.balance);
+
     setPlayers(sorted);
-  }, [balance]); // re-run whenever your balance changes
+    localStorage.setItem("mvzx_leaderboard", JSON.stringify(sorted));
+  }, [balance]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[100vh] w-full bg-gradient-to-b from-cream via-white to-red-50 p-6">
@@ -56,7 +77,7 @@ export default function Leaderboard() {
       </div>
 
       <p className="mt-4 text-gray-500 text-sm">
-        (Mock leaderboard — will sync with backend later.)
+        (Leaderboard stored locally — backend sync will come later.)
       </p>
     </div>
   );
