@@ -45,3 +45,8 @@ export async function createFlutterwavePayment(amount: number) {
     body: JSON.stringify({ amount })
   });
 }
+
+// ✅ NEW: Spin Wheel API
+export async function fetchSpinReward() {
+  return request("/spin/reward"); // expects { amount: number } from backend
+}
