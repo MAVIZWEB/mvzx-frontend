@@ -1,23 +1,61 @@
- import React from "react";
-import { Link } from "react-router-dom";
+ import React, { useState } from "react";
+import MatrixStatus from "../components/MatrixStatus";
 
+// This is a UI starter. Backend endpoints can be added later for creating and releasing escrows.
 export default function Escrow() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen px-4">
-      <div className="max-w-2xl bg-white p-6 rounded shadow text-center">
-        <h2 className="text-2xl font-bold mb-3">Escrow P2P Exchange (Preview)</h2>
-        <p className="mb-4 text-gray-700">
-          This is a simple P2P escrow interface placeholder. Buyers and sellers will create offers,
-          lock funds in escrow and confirm transfer. Company can also perform buybacks here.
-        </p>
+  const [userId, setUserId] = useState<string>(() => localStorage.getItem("mvzx_user") || "demo-user");
+  const [orderType, setOrderType] = useState<"buy"|"sell">("buy");
+  const [amountMVZX, setAmountMVZX] = useState<number>(10);
+  const [pricePerMVZX, setPricePerMVZX] = useState<number>(200); // NGN
+  const [counterparty, setCounterparty] = useState("");
+  const [note, setNote] = useState("");
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          <button className="py-2 bg-blue-600 text-white rounded">Create Offer</button>
-          <button className="py-2 bg-green-600 text-white rounded">Browse Offers</button>
+  const createEscrow = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert(`(Mock) Created ${orderType.toUpperCase()} escrow: ${amountMVZX} MVZx @ ₦${pricePerMVZX} with ${counterparty}`);
+  };
+
+  return (
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
+      <h1 className="text-2xl font-bold">Escrow Trade</h1>
+      <p className="text-gray-600">Secure P2P trades for MVZx with blockchain settlement after both sides confirm.</p>
+
+      <form onSubmit={createEscrow} className="bg-white rounded-xl shadow p-5 space-y-4">
+        <div className="flex gap-3">
+          <button type="button" className={`tab ${orderType==="buy"?"tab-active":""}`} onClick={()=>setOrderType("buy")}>Buy</button>
+          <button type="button" className={`tab ${orderType==="sell"?"tab-active":""}`} onClick={()=>setOrderType("sell")}>Sell</button>
         </div>
 
-        <Link to="/" className="mt-4 inline-block text-blue-600 hover:underline">Back Home</Link>
-      </div>
+        <div className="grid md:grid-cols-3 gap-4">
+          <Field label="Amount (MVZx)">
+            <input type="number" className="input" min={1} step="1" value={amountMVZX} onChange={e=>setAmountMVZX(parseFloat(e.target.value||"0"))} />
+          </Field>
+          <Field label="Price per MVZx (NGN)">
+            <input type="number" className="input" min={1} step="1" value={pricePerMVZX} onChange={e=>setPricePerMVZX(parseFloat(e.target.value||"0"))} />
+          </Field>
+          <Field label="Counterparty Wallet / Username">
+            <input className="input" value={counterparty} onChange={e=>setCounterparty(e.target.value)} />
+          </Field>
+        </div>
+
+        <div>
+          <label className="text-sm text-gray-600">Note</label>
+          <textarea className="input" rows={3} value={note} onChange={e=>setNote(e.target.value)} />
+        </div>
+
+        <button className="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded">Create Escrow (Mock)</button>
+      </form>
+
+      <MatrixStatus userId={userId} />
+    </div>
+  );
+}
+
+function Field({label, children}:{label:string;children:React.ReactNode}) {
+  return (
+    <div>
+      <label className="text-sm text-gray-600">{label}</label>
+      {children}
     </div>
   );
 }
