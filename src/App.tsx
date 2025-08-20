@@ -14,7 +14,7 @@ import Dashboard from "./pages/Dashboard";
 
 // Import extras
 import Game from "./pages/Game";
-import Leaderboard from "./pages/Leaderboard";
+// 🚨 Removed Leaderboard because file is missing
 
 function App() {
   return (
@@ -29,7 +29,7 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/game" element={<Game />} />
-      <Route path="/leaderboard" element={<Leaderboard />} />
+      {/* 🚨 Removed Leaderboard route */}
     </Routes>
   );
 }
