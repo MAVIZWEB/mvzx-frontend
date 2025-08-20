@@ -1,7 +1,7 @@
-import React from "react";
+ import React from "react";
 
-function Leaderboard() {
+const Leaderboard: React.FC = () => {
   return <h1>Leaderboard Page</h1>;
-}
+};
 
 export default Leaderboard;
