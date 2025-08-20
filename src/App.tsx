@@ -1,4 +1,4 @@
- import React from "react";
+import React from "react";
 import { Routes, Route } from "react-router-dom";
 
 // Import all 9 pages
@@ -14,7 +14,7 @@ import Dashboard from "./pages/Dashboard";
 
 // Import extras
 import Game from "./pages/Game";
-// 🚨 Removed Leaderboard because file is missing
+import Leaderboard from "./pages/Leaderboard";
 
 function App() {
   return (
@@ -29,7 +29,7 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/game" element={<Game />} />
-      {/* 🚨 Removed Leaderboard route */}
+      <Route path="/leaderboard" element={<Leaderboard />} />
     </Routes>
   );
 }
