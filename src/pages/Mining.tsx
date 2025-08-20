@@ -1,35 +1,33 @@
-import React, { useEffect, useState } from "react";
-import MatrixStatus from "../components/MatrixStatus";
+ import React, { useState } from "react";
+import { api } from "../services/api";
 
-export default function Mining() {
-  const [userId] = useState<string>(() => localStorage.getItem("mvzx_user") || "demo-user");
-  const [balance, setBalance] = useState<number>(0);
+const Mining: React.FC = () => {
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    const b = parseFloat(localStorage.getItem("mvzx_balance") || "0");
-    setBalance(isNaN(b) ? 0 : b);
-  }, []);
-  const save = (v:number) => {
-    setBalance(v);
-    localStorage.setItem("mvzx_balance", v.toString());
+  const claim = async () => {
+    setLoading(true); setMsg(null);
+    try {
+      const res = await api.miningClaim();
+      setMsg(`✅ Mining reward claimed: +${res?.amount ?? 0} MVZx`);
+    } catch (err: any) {
+      setMsg(`❌ ${err.message}`);
+    } finally { setLoading(false); }
   };
 
-  const mine = () => save(balance + 0.05); // small tap-to-mine payout
-  const reset = () => save(0);
-
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Free Mining</h1>
-      <div className="bg-white rounded-xl shadow p-6">
-        <div className="text-lg">Your MVZx Balance: <b>{balance.toFixed(3)}</b></div>
-        <div className="mt-4 flex gap-3">
-          <button onClick={mine} className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded">Tap to Mine +0.05</button>
-          <button onClick={reset} className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded">Reset (Test)</button>
-        </div>
-        <p className="text-xs text-gray-500 mt-3">Mining and Spin share the same local balance for now; backend wallet will replace this later.</p>
-      </div>
-
-      <MatrixStatus userId={userId} />
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-yellow-50">
+      <h1 className="text-3xl font-bold text-yellow-600 mb-2">⛏️ MVZx Mining</h1>
+      <p className="text-gray-600 mb-6 text-center max-w-md">
+        Tap to claim mining rewards (cooldown & rate controlled by admin).
+      </p>
+      <button onClick={claim} disabled={loading}
+              className={`px-8 py-3 rounded-xl text-white ${loading?"bg-gray-400":"bg-yellow-600 hover:bg-yellow-700"}`}>
+        {loading ? "Claiming..." : "Claim Reward"}
+      </button>
+      {msg && <p className="mt-4">{msg}</p>}
     </div>
   );
-}
+};
+
+export default Mining;
