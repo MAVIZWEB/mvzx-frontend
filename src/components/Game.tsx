@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { fetchMatrixStatus, MatrixStatus } from "../services/matrixService";
 
 interface Player {
   id: string;
@@ -12,21 +13,34 @@ const Game: React.FC = () => {
   const [players, setPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
-    // Fake demo players
-    const fake = [
-      { id: "1", name: "User 1", points: 900, stage: 2 },
-      { id: "2", name: "User 2", points: 600, stage: 1 },
-      { id: "3", name: "User 3", points: 300, stage: 1 },
-    ];
-    setPlayers(fake);
+    async function loadPlayers() {
+      try {
+        const userIds = ["u1", "u2", "u3", "u4", "u5"];
+        const results = await Promise.all(userIds.map((id) => fetchMatrixStatus(id)));
+
+        const mapped = results.map((res, index) => ({
+          id: res.userId,
+          name: `User ${index + 1}`,
+          points: res.earningsSoFar,
+          stage: res.stage,
+        }));
+
+        mapped.sort((a, b) => b.points - a.points);
+        setPlayers(mapped);
+      } catch (err) {
+        console.error("Failed to load players:", err);
+      }
+    }
+
+    loadPlayers();
   }, []);
 
   const getBadgeClass = (points: number) => {
-    if (points >= 1000) return "badge-diamond";
-    if (points >= 800) return "badge-platinum";
-    if (points >= 600) return "badge-gold";
-    if (points >= 400) return "badge-silver";
-    return "badge-bronze";
+    if (points >= 1000) return "bg-gradient-to-r from-cyan-400 to-blue-600";
+    if (points >= 800) return "bg-gradient-to-r from-gray-300 to-gray-500";
+    if (points >= 600) return "bg-gradient-to-r from-yellow-400 to-yellow-600";
+    if (points >= 400) return "bg-gradient-to-r from-gray-200 to-gray-400";
+    return "bg-gradient-to-r from-orange-400 to-red-600";
   };
 
   return (
@@ -37,32 +51,31 @@ const Game: React.FC = () => {
         {players.map((player, index) => (
           <motion.div
             key={player.id}
-            className="leaderboard-card"
+            className="p-4 rounded-2xl shadow-lg bg-white/10 backdrop-blur-md border border-white/20"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
           >
             <div className="flex items-center justify-between">
-              <span className="font-bold text-lg text-gray-700">#{index + 1}</span>
+              <span className="font-bold text-lg text-gray-200">#{index + 1}</span>
 
               <div className="flex items-center gap-3">
-                <div className={`badge ${getBadgeClass(player.points)}`}>
+                <div className={`w-10 h-10 flex items-center justify-center rounded-full text-white font-bold ${getBadgeClass(player.points)}`}>
                   {player.name.charAt(0)}
                 </div>
                 <div>
                   <p className="font-semibold">{player.name}</p>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-400">
                     {player.points} pts | Stage {player.stage}
                   </p>
                 </div>
               </div>
 
-              <span
-                className={`text-xs font-bold uppercase px-2 py-1 rounded ${getBadgeClass(
-                  player.points
-                )}`}
-              >
-                {getBadgeClass(player.points).replace("badge-", "")}
+              <span className={`text-xs font-bold uppercase px-2 py-1 rounded ${getBadgeClass(player.points)}`}>
+                {getBadgeClass(player.points).includes("cyan") ? "Diamond" : 
+                 getBadgeClass(player.points).includes("gray-300") ? "Platinum" :
+                 getBadgeClass(player.points).includes("yellow") ? "Gold" :
+                 getBadgeClass(player.points).includes("gray-200") ? "Silver" : "Bronze"}
               </span>
             </div>
           </motion.div>
