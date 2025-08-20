@@ -1,7 +1,7 @@
-import React from "react";
+ import React from "react";
 import { Link } from "react-router-dom";
-import { Leaderboard } from "./Leaderboard";
-import { Game } from "./Game";
+import Leaderboard from "./Leaderboard";
+import Game from "./Game";
 import { Button } from "@/components/ui/button";
 import { Menu, User } from "lucide-react";
 import { motion } from "framer-motion";
