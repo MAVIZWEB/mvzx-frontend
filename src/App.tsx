@@ -1,61 +1,66 @@
- import React, { useState } from "react";
-import Wheel from "./components/Wheel";
-import Game from "./components/Game";
+ import React from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Buy from "./pages/Buy";
+import Game from "./pages/Game";
+import Airdrop from "./pages/Airdrop"; // you’ll create this next
+// import Mining from "./pages/Mining";
+// import Escrow from "./pages/Escrow";
+// import Voting from "./pages/Voting";
+// import Trade from "./pages/Trade";
+// import Signup from "./pages/Signup";
 
 const App: React.FC = () => {
-  const [balance, setBalance] = useState(0);
-
-  const handleWin = (prize: string) => {
-    // Update balance on win
-    setBalance((prev) => prev + 100);
-    console.log("You won:", prize);
-  };
-
   return (
-    <div className="min-h-screen bg-cream flex flex-col">
-      {/* HEADER */}
-      <header className="flex items-center justify-between p-4 bg-glassy-red shadow-md">
-        <img src="/logo.png" alt="Logo" className="h-10 w-auto" />
+    <Router>
+      <div className="min-h-screen bg-gray-100">
+        {/* Top Section with platform description */}
+        <header className="bg-blue-600 text-white p-4 text-center">
+          <h1 className="text-2xl font-bold">MVZx Platform</h1>
+          <p className="mt-2 text-sm">Buy, Trade, Mine & Earn instantly.</p>
+        </header>
 
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-white">MAVIZ LIQUIDITY</h1>
-          <h2 className="text-sm text-white">BUY & EARN</h2>
-        </div>
+        {/* Landing Page Buttons */}
+        <main className="p-6 flex flex-col items-center space-y-4">
+          <Link to="/buy" className="w-full max-w-md">
+            <button className="w-full bg-green-600 text-white py-3 rounded-xl shadow-lg">
+              💰 MVZx Buy & Earn
+            </button>
+          </Link>
 
-        <button className="text-white font-semibold">Sign In</button>
-      </header>
+          <Link to="/airdrop" className="w-full max-w-md">
+            <button className="w-full bg-pink-600 text-white py-3 rounded-xl shadow-lg">
+              🎁 Airdrop
+            </button>
+          </Link>
 
-      {/* MAIN CONTENT */}
-      <main className="flex-1 flex flex-col items-center p-4">
-        {/* Title Above Wheel */}
-        <h2 className="text-lg font-semibold text-red-700 mb-2">
-          🎯 Instant Spin & Earn
-        </h2>
+          <Link to="/game" className="w-full max-w-md">
+            <button className="w-full bg-purple-600 text-white py-3 rounded-xl shadow-lg">
+              🎡 Spin & Earn Game
+            </button>
+          </Link>
 
-        {/* Wheel */}
-        <div className="relative mb-6">
-          <Wheel onWin={handleWin} />
-        </div>
+          <Link to="/dashboard" className="w-full max-w-md">
+            <button className="w-full bg-blue-700 text-white py-3 rounded-xl shadow-lg">
+              📊 Dashboard
+            </button>
+          </Link>
+        </main>
 
-        {/* Buttons */}
-        <div className="grid grid-cols-2 gap-3 w-full max-w-md mb-10">
-          <button className="btn">Buy MVZx & Earn</button>
-          <button className="btn">Direct Transfer Buy</button>
-          <button className="btn">Airdrop</button>
-          <button className="btn">Sign Up</button>
-          <button className="btn">Mining</button>
-          <button className="btn">Escrow Trade</button>
-          <button className="btn">Trade</button>
-          <button className="btn">Voting</button>
-          <button className="btn col-span-2">Game</button>
-        </div>
-
-        {/* Leaderboard */}
-        <div className="w-full max-w-2xl">
-          <Game />
-        </div>
-      </main>
-    </div>
+        {/* Routes */}
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/buy" element={<Buy />} />
+          <Route path="/game" element={<Game />} />
+          <Route path="/airdrop" element={<Airdrop />} />
+          {/* <Route path="/mining" element={<Mining />} />
+          <Route path="/escrow" element={<Escrow />} />
+          <Route path="/trade" element={<Trade />} />
+          <Route path="/voting" element={<Voting />} />
+          <Route path="/signup" element={<Signup />} /> */}
+        </Routes>
+      </div>
+    </Router>
   );
 };
 
