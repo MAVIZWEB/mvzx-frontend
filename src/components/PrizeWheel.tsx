@@ -1,105 +1,86 @@
  import React, { useState } from "react";
 import { motion } from "framer-motion";
-import useSound from "use-sound";
-import clapSound from "./assets/clap.mp3"; // make sure this file exists
 
-const segments = [
-  "5 MVZx",
-  "10 MVZx",
-  "15 MVZx",
-  "20 MVZx",
-  "Try Again",
-  "50 MVZx",
-  "100 MVZx",
-  "Better Luck",
-];
+const prizes = ["10 MVZx", "20 MVZx", "50 MVZx", "100 MVZx", "Try Again", "5 MVZx"];
+const badgeColors = {
+  Bronze: "from-orange-400 to-red-600",
+  Silver: "from-gray-200 to-gray-400",
+  Gold: "from-yellow-400 to-yellow-600",
+  Platinum: "from-gray-300 to-gray-500",
+  Diamond: "from-cyan-400 to-blue-600",
+};
 
 const PrizeWheel: React.FC = () => {
-  const [rotation, setRotation] = useState(0);
   const [spinning, setSpinning] = useState(false);
-  const [winner, setWinner] = useState<string | null>(null);
-
-  const [play] = useSound(clapSound);
+  const [result, setResult] = useState<string | null>(null);
+  const [wallet, setWallet] = useState(0);
+  const [badge, setBadge] = useState("Bronze");
 
   const spinWheel = () => {
     if (spinning) return;
-
     setSpinning(true);
-    setWinner(null);
-
-    const randomSpin = Math.floor(2000 + Math.random() * 2000); // degrees
-    const newRotation = rotation + randomSpin;
-    setRotation(newRotation);
+    const randomIndex = Math.floor(Math.random() * prizes.length);
+    const prize = prizes[randomIndex];
 
     setTimeout(() => {
-      const segmentAngle = 360 / segments.length;
-      const winningIndex =
-        Math.floor(((newRotation % 360) / segmentAngle)) % segments.length;
-      const prize = segments[segments.length - 1 - winningIndex];
+      setResult(prize);
+      if (prize !== "Try Again") {
+        const earned = parseInt(prize.replace(" MVZx", ""));
+        const newWallet = wallet + earned;
+        setWallet(newWallet);
 
-      setWinner(prize);
-      setSpinning(false);
-
-      if (prize !== "Try Again" && prize !== "Better Luck") {
-        play(); // play clap only if win
+        if (newWallet >= 1000) setBadge("Diamond");
+        else if (newWallet >= 800) setBadge("Platinum");
+        else if (newWallet >= 600) setBadge("Gold");
+        else if (newWallet >= 400) setBadge("Silver");
+        else setBadge("Bronze");
       }
-    }, 4000);
+      setSpinning(false);
+    }, 2000);
   };
 
   return (
-    <div className="flex flex-col items-center justify-center space-y-6">
-      <div className="relative w-80 h-80">
-        {/* Arrow */}
-        <div className="absolute top-[-20px] left-1/2 -translate-x-1/2 z-20">
-          <div className="w-0 h-0 border-l-[15px] border-r-[15px] border-b-[30px] border-l-transparent border-r-transparent border-b-red-600"></div>
+    <div className="flex flex-col items-center">
+      {/* Wheel */}
+      <motion.div
+        className="w-64 h-64 rounded-full border-8 border-red-600 bg-red-700 text-white flex items-center justify-center shadow-2xl"
+        animate={{ rotate: spinning ? 720 : 0 }}
+        transition={{ duration: 2 }}
+      >
+        {spinning ? "Spinning..." : result || "Spin to Win"}
+      </motion.div>
+
+      {/* Spin button & side stacks */}
+      <div className="flex items-start gap-8 mt-4">
+        {/* Left Stack: Badge, Earnings, Wallet */}
+        <div className="flex flex-col gap-2 items-start">
+          <div className={`px-3 py-1 rounded-xl bg-gradient-to-r ${badgeColors[badge]} text-white font-bold`}>
+            {badge} Badge
+          </div>
+          <div className="px-3 py-1 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+            Last Spin: {result || "-"}
+          </div>
+          <div className="px-3 py-1 rounded-xl bg-white/10 backdrop-blur-md border border-white/20">
+            Wallet: {wallet} MVZx
+          </div>
         </div>
 
-        {/* Wheel */}
-        <motion.div
-          animate={{ rotate: rotation }}
-          transition={{ duration: 4, ease: "easeOut" }}
-          className="w-full h-full rounded-full border-[10px] border-red-600 shadow-lg overflow-hidden"
-          style={{
-            background: `conic-gradient(
-              #fff 0deg 45deg,
-              #e11d48 45deg 90deg,
-              #fff 90deg 135deg,
-              #e11d48 135deg 180deg,
-              #fff 180deg 225deg,
-              #e11d48 225deg 270deg,
-              #fff 270deg 315deg,
-              #e11d48 315deg 360deg
-            )`,
-          }}
+        {/* Spin Button */}
+        <button
+          onClick={spinWheel}
+          disabled={spinning}
+          className="px-6 py-3 bg-gradient-to-r from-red-600 to-red-800 rounded-2xl font-bold text-white shadow-lg hover:scale-105 transition"
         >
-          {/* Labels */}
-          {segments.map((seg, i) => (
-            <div
-              key={i}
-              className="absolute w-full h-full flex items-center justify-center text-xs font-bold text-red-900"
-              style={{
-                transform: `rotate(${(360 / segments.length) * i}deg)`,
-              }}
-            >
-              {seg}
-            </div>
-          ))}
-        </motion.div>
+          {spinning ? "Spinning..." : "Spin"}
+        </button>
+
+        {/* Right Stack: reserved */}
+        <div className="flex flex-col gap-2 items-start">
+          <div className="px-3 py-1 rounded-xl bg-transparent text-gray-400 italic">
+            Reserved
+          </div>
+        </div>
       </div>
-
-      <button
-        onClick={spinWheel}
-        disabled={spinning}
-        className="px-6 py-3 bg-red-600 text-white rounded-full font-bold shadow hover:bg-red-700 disabled:opacity-50"
-      >
-        {spinning ? "Spinning..." : "Spin Now"}
-      </button>
-
-      {winner && (
-        <p className="text-lg font-semibold text-red-700">
-          🎉 You got: {winner}!
-        </p>
-      )}
     </div>
   );
 };
