@@ -22,7 +22,7 @@ const Game: React.FC = () => {
     if (spinning) return;
     setSpinning(true); setReward(null); setMsg(null);
     try {
-      const res = await api.spin(); // backend decides outcome & award
+      const res = await api.spin();
       const got = res?.rewardLabel || sectors[Math.floor(Math.random()*sectors.length)];
       setReward(got);
       const credit = Number(res?.amount ?? 0);
