@@ -1,43 +1,45 @@
  import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { api, setAuth } from "../services/api";
 
-export default function Signup() {
-  const nav = useNavigate();
-  const [wallet, setWallet] = useState("");
+const Signup: React.FC = () => {
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  function handleSave(e: React.FormEvent) {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!wallet || !pin || pin.length !== 4) {
-      alert("Enter wallet and 4-digit PIN");
-      return;
-    }
-    const u = { wallet, email, pin };
-    localStorage.setItem("mvzx_user", JSON.stringify(u));
-    alert("Saved. You're signed in locally.");
-    nav("/");
-  }
+    setLoading(true); setMsg(null);
+    try {
+      const res = await api.signup(email, pin);
+      if (res?.token) setAuth(res.token);
+      setMsg("✅ Account created. Wallet assigned. You’re signed in.");
+    } catch (err: any) {
+      setMsg(`❌ ${err.message}`);
+    } finally { setLoading(false); }
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen px-4">
-      <form onSubmit={handleSave} className="bg-white shadow p-6 rounded max-w-md w-full">
-        <h2 className="text-2xl font-bold mb-4">Signup / Quick Wallet</h2>
-
-        <label className="block text-sm">Wallet Address</label>
-        <input className="w-full border rounded px-3 py-2 mb-3" value={wallet} onChange={e => setWallet(e.target.value)} placeholder="0x..." />
-
-        <label className="block text-sm">Email (optional)</label>
-        <input className="w-full border rounded px-3 py-2 mb-3" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" />
-
-        <label className="block text-sm">4-digit PIN</label>
-        <input className="w-full border rounded px-3 py-2 mb-4" value={pin} onChange={e => setPin(e.target.value)} placeholder="1234" maxLength={4} />
-
-        <div className="flex gap-3">
-          <button type="submit" className="flex-1 bg-green-600 text-white py-2 rounded">Save Account</button>
-          <Link to="/" className="flex-1 text-center py-2 border rounded">Cancel</Link>
-        </div>
-      </form>
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow p-6">
+        <h1 className="text-2xl font-bold text-center mb-2">📝 Sign Up</h1>
+        <p className="text-center text-gray-600 mb-6">
+          Create your account with email + 4-digit PIN. Your wallet (0x…) is your ID.
+        </p>
+        <form onSubmit={submit} className="space-y-4">
+          <input className="w-full border rounded-xl p-3" type="email" placeholder="Email"
+                 value={email} onChange={(e)=>setEmail(e.target.value)} required />
+          <input className="w-full border rounded-xl p-3" type="password" placeholder="4-digit PIN"
+                 value={pin} onChange={(e)=>setPin(e.target.value)} required maxLength={4} />
+          <button disabled={loading}
+                  className={`w-full rounded-xl text-white py-3 ${loading?"bg-gray-400":"bg-purple-700 hover:bg-purple-800"}`}>
+            {loading ? "Creating..." : "Create Account"}
+          </button>
+        </form>
+        {msg && <p className="mt-4 text-center">{msg}</p>}
+      </div>
     </div>
   );
-}
+};
+
+export default Signup;
