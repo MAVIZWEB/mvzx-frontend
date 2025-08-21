@@ -215,33 +215,45 @@ export default function LandingPage() {
           <div className="relative flex flex-col items-center mb-3">
             <div className="absolute inset-x-3 -top-2"><LeaderboardGlass /></div>
             <div className="h-16" />
+
+            {/* Wheel with sectors + stickers */}
             <div
               ref={wheelRef}
-              className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+              className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)] overflow-hidden"
               style={{
                 width: wheelSize,
                 height: wheelSize,
                 transform: `rotate(${rotation}deg)`,
                 transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
-                background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 55%, transparent 60%)",
               }}
             >
               {prizes.map((label, i) => {
-                const angle = (360 / prizes.length) * i + (360 / prizes.length) / 2;
+                const angle = (360 / prizes.length) * i;
+                const midAngle = angle + 180 / prizes.length;
                 const colors = ["#FACC15", "#3B82F6", "#10B981"];
                 return (
-                  <div
-                    key={i}
-                    className="absolute left-1/2 top-1/2 px-2 py-1 rounded font-bold text-xs"
-                    style={{
-                      transform: `rotate(${angle}deg) translate(${wheelSize * 0.32}px) rotate(${-angle}deg)`,
-                      transformOrigin: "0 0",
-                      backgroundColor: colors[i % colors.length],
-                      color: "#000",
-                    }}
-                  >
-                    {label}
-                  </div>
+                  <React.Fragment key={i}>
+                    {/* Sector divider line */}
+                    <div
+                      className="absolute left-1/2 top-1/2 w-px bg-white/30"
+                      style={{
+                        height: wheelSize / 2,
+                        transform: `rotate(${angle}deg) translateY(-${wheelSize / 4}px)`,
+                        transformOrigin: "bottom center",
+                      }}
+                    />
+                    {/* Sticker inside sector */}
+                    <div
+                      className="absolute left-1/2 top-1/2 px-2 py-1 rounded font-bold text-xs"
+                      style={{
+                        transform: `rotate(${midAngle}deg) translate(${wheelSize * 0.28}px) rotate(${-midAngle}deg)`,
+                        backgroundColor: colors[i % colors.length],
+                        color: "#000",
+                      }}
+                    >
+                      {label}
+                    </div>
+                  </React.Fragment>
                 );
               })}
             </div>
