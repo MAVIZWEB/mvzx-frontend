@@ -1,26 +1,25 @@
-import React from "react";
+ import React from "react";
 
-interface BadgeProps {
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
-  color?: "green" | "red" | "blue" | "gray";
   className?: string;
 }
 
-const Badge: React.FC<BadgeProps> = ({ children, color = "gray", className }) => {
-  const colors: Record<string, string> = {
-    green: "bg-green-100 text-green-800",
-    red: "bg-red-100 text-red-800",
-    blue: "bg-blue-100 text-blue-800",
-    gray: "bg-gray-100 text-gray-800",
-  };
-
+const Badge: React.FC<BadgeProps> = ({ children, className = "", ...props }) => {
   return (
-    <span
-      className={`inline-flex items-center px-3 py-1 text-sm font-medium rounded-full ${colors[color]} ${className}`}
+    <div
+      {...props}
+      className={`
+        inline-block px-2 py-0.5 text-xs font-semibold rounded-full
+        bg-gradient-to-r from-yellow-400 via-orange-400 to-red-500
+        text-white shadow-md shadow-black/20
+        backdrop-blur-sm
+        ${className}
+      `}
     >
       {children}
-    </span>
+    </div>
   );
 };
 
-export { Badge };
+export default Badge;
