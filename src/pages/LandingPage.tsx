@@ -2,18 +2,16 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, User, Wallet, Trophy, Crown } from "lucide-react";
 
+// Local UI atoms
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
 import Badge from "../components/UI/Badge";
 
-const API_BASE = import.meta.env.VITE_API_BASE;
-
-// Helper to format numbers
+// --- Helpers ---------------------------------------------------------------
 function formatNumber(n: number) {
   return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
-// Tiny win chime using WebAudio
 function playWinChime() {
   try {
     const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -33,7 +31,7 @@ function playWinChime() {
   }
 }
 
-// Leaderboard matching landing page styling
+// --- Leaderboard glass (same style as original landing page) ------------------------
 function LeaderboardGlass() {
   const [rows, setRows] = useState<{ user: string; prize: string; ts: string }[]>([
     { user: "Grace", prize: "20 MVZx", ts: "2m ago" },
@@ -41,31 +39,6 @@ function LeaderboardGlass() {
     { user: "Sola", prize: "50 MVZx", ts: "12m ago" },
     { user: "Ife", prize: "5 MVZx", ts: "18m ago" },
   ]);
-
-  useEffect(() => {
-    let mounted = true;
-    if (!API_BASE) return;
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/public/leaderboard`, { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (mounted && Array.isArray(data?.items)) {
-          setRows(
-            data.items.slice(0, 6).map((r: any) => ({
-              user: String(r.user ?? "User"),
-              prize: String(r.prize ?? "—"),
-              ts: String(r.ts ?? ""),
-            }))
-          );
-        }
-      } catch {}
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
   return (
     <div className="rounded-2xl bg-white/6 backdrop-blur-md border border-white/10 shadow-md p-3">
       <div className="flex items-center gap-2 mb-2">
@@ -85,44 +58,34 @@ function LeaderboardGlass() {
   );
 }
 
+// --- Main Landing Page -----------------------------------------------------
 export default function LandingPage() {
   const navigate = useNavigate();
 
-  // Status capsule
   const [badge, setBadge] = useState<"Bronze" | "Silver" | "Gold" | "Platinum">("Bronze");
   const [wins, setWins] = useState<number>(0);
   const [wallet, setWallet] = useState<number>(0);
 
-  useEffect(() => {
-    let mounted = true;
-    if (!API_BASE) return;
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/public/landing-summary`, { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!mounted) return;
-        if (data?.badge) setBadge(data.badge);
-        if (typeof data?.wins === "number") setWins(data.wins);
-        if (typeof data?.wallet === "number") setWallet(data.wallet);
-      } catch {}
-    })();
-    return () => { mounted = false; };
-  }, []);
+  const [demoMode, setDemoMode] = useState(true);
 
-  // Wheel
-  const prizes = useMemo(() => ["5 MVZx", "10 MVZx", "Try Again", "15 MVZx", "20 MVZx", "50 MVZx"], []);
+  // Demo Mining Button state
+  const [mining, setMining] = useState(false);
+  const [mineCounter, setMineCounter] = useState(0);
+
+  const prizes = useMemo(
+    () => ["5 MVZx", "10 MVZx", "Try Again", "15 MVZx", "20 MVZx", "50 MVZx"],
+    []
+  );
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(null);
   const wheelRef = useRef<HTMLDivElement>(null);
 
-  const spin = async () => {
+  const spin = () => {
     if (spinning) return;
     setResult(null);
     setSpinning(true);
 
-    // Fake spin for demo if no signup
     let prizeIndex = Math.floor(Math.random() * prizes.length);
 
     const segment = 360 / prizes.length;
@@ -133,32 +96,33 @@ export default function LandingPage() {
       const chosen = prizes[prizeIndex];
       setResult(chosen);
       setSpinning(false);
-      playWinChime();
-      setWins((w) => w + 1);
+      if (!demoMode && chosen !== "Try Again") {
+        playWinChime();
+        setWins((w) => w + 1);
+      }
     }, 4200);
   };
 
-  // Demo mining state
-  const [mining, setMining] = useState(false);
-  const [miningCount, setMiningCount] = useState(0);
-
+  // Demo Mining counter
   useEffect(() => {
-    let interval: NodeJS.Timer;
+    let interval: NodeJS.Timeout;
     if (mining) {
-      const start = Date.now();
+      const startTime = Date.now();
       interval = setInterval(() => {
-        const elapsed = Date.now() - start;
-        if (elapsed >= 180000) {
-          clearInterval(interval);
+        const elapsed = Date.now() - startTime;
+        if (elapsed >= 180_000) {
           setMining(false);
-        } else setMiningCount(elapsed);
-      }, 16);
+          clearInterval(interval);
+        } else {
+          setMineCounter(elapsed);
+        }
+      }, 100);
     }
     return () => clearInterval(interval);
   }, [mining]);
 
-  // Mobile-first sizing
-  const wheelSize = 220;
+  const vh = Math.max(600, window.innerHeight);
+  const wheelSize = Math.min(260, Math.max(210, Math.floor(vh * 0.33)));
 
   return (
     <div
@@ -169,7 +133,7 @@ export default function LandingPage() {
       }}
     >
       {/* Header */}
-      <header className="sticky top-0 z-30">
+      <header className="sticky top-0 z-30" style={{ background: "linear-gradient(180deg, #0d2a36 0%, #095f61 100%)" }}>
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex items-center gap-2">
             <img
@@ -180,7 +144,7 @@ export default function LandingPage() {
           </div>
           <div className="text-center leading-tight">
             <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ LIQUIDITY</h1>
-            <p className="text-[12px] opacity-90">MVZx Buy & Earn</p>
+            <p className="text-[12px] opacity-95">MVZx Buy & Earn</p>
           </div>
           <div className="flex items-center gap-3">
             <Button
@@ -193,6 +157,7 @@ export default function LandingPage() {
             <Button
               onClick={() => navigate("/dashboard")}
               className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10"
+              aria-label="Menu / Dashboard"
             >
               <Menu className="w-4 h-4" />
             </Button>
@@ -205,8 +170,16 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <main className="flex-1 px-3 pb-2">
+      {/* Main */}
+      <main className="flex-1 px-3 pb-3">
         <Card className="relative rounded-2xl bg-white/10 border border-white/15 backdrop-blur-xl shadow-2xl p-3">
+          {/* Demo warning */}
+          {demoMode && (
+            <div className="text-xs text-yellow-300 font-semibold text-center mb-2">
+              ⚠️ Demo mode – Sign up to earn real MVZx
+            </div>
+          )}
+
           {/* Status Capsule */}
           <div className="flex items-center justify-between gap-2 rounded-full px-3 py-2 bg-white/10 border border-white/15 mb-2">
             <div className="flex items-center gap-1.5">
@@ -222,12 +195,14 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Wheel + Leaderboard */}
+          {/* Leaderboard & Wheel */}
           <div className="relative flex flex-col items-center">
             <div className="absolute inset-x-3 -top-2">
               <LeaderboardGlass />
             </div>
             <div className="h-16" />
+
+            {/* Wheel */}
             <div
               ref={wheelRef}
               className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
@@ -245,79 +220,104 @@ export default function LandingPage() {
                     rgba(255,255,255,0.15) 180deg 240deg,
                     rgba(255,255,255,0.85) 240deg 300deg,
                     rgba(255,255,255,0.15) 300deg 360deg
-                  )`,
+                )`,
               }}
             >
-              <div className="absolute inset-0 flex items-center justify-center" style={{ transform: `rotate(${-rotation}deg)` }}>
+              <div
+                className="absolute inset-0 flex items-center justify-center"
+                style={{ transform: `rotate(${-rotation}deg)` }}
+              >
                 <div className="rounded-full bg-[#d90429] text-white text-xs font-extrabold px-4 py-3 shadow-xl border border-white/30">
                   SPIN
                 </div>
               </div>
+              {prizes.map((label, i) => {
+                const angle = (360 / prizes.length) * i + (360 / prizes.length) / 2;
+                return (
+                  <div
+                    key={i}
+                    className="absolute left-1/2 top-1/2 text-[11px] font-bold text-[#7b0e17] drop-shadow text-center"
+                    style={{
+                      transform: `rotate(${angle}deg) translate(${wheelSize * 0.32}px) rotate(${-angle}deg)`,
+                      transformOrigin: "0 0",
+                      whiteSpace: "nowrap",
+                      width: 60,
+                    }}
+                  >
+                    {label}
+                  </div>
+                );
+              })}
             </div>
+
+            {/* Pointer */}
             <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[18px] border-transparent border-b-yellow-300 drop-shadow" />
+
+            {/* Spin Button */}
             <Button
               onClick={spin}
               disabled={spinning}
-              className="w-full max-w-[120px] py-1.5 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold text-xs tracking-wide"
+              className="w-full max-w-xs py-2 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold tracking-wide"
             >
               {spinning ? "Spinning..." : "SPIN NOW"}
             </Button>
+
+            {/* Result */}
             {result && (
-              <div className="mt-2 text-sm font-semibold">{result === "Try Again" ? "No luck—try again!" : `🎉 You won: ${result}`}</div>
+              <div className="mt-2 text-sm font-semibold text-center">
+                {result === "Try Again" ? "No luck—try again!" : `🎉 You won: ${result}`}
+              </div>
             )}
           </div>
 
-          {/* Feature Buttons 3x2 */}
+          {/* Feature Buttons 3x2 grid, uniform smaller size */}
           <div className="grid grid-cols-3 gap-2 mt-3">
             <Link to="/buy">
-              <Button className="w-full h-14 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#16a34a] hover:brightness-110">
+              <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 bg-[#16a34a] hover:brightness-110">
                 <span>MVZx</span>
                 <span>Buy & Earn</span>
               </Button>
             </Link>
             <Link to="/airdrop">
-              <Button className="w-full h-14 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#db2777] hover:brightness-110">
+              <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 bg-[#db2777] hover:brightness-110">
                 <span>Airdrop</span>
               </Button>
             </Link>
             <Link to="/mining">
-              <Button className="w-full h-14 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#ca8a04] hover:brightness-110">
+              <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 bg-[#ca8a04] hover:brightness-110">
                 <span>Mining</span>
               </Button>
             </Link>
             <Link to="/directbuy">
-              <Button className="w-full h-14 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#2563eb] hover:brightness-110">
+              <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 bg-[#2563eb] hover:brightness-110">
                 <span>Direct</span>
                 <span>Deposit Buy</span>
               </Button>
             </Link>
             <Link to="/escrow">
-              <Button className="w-full h-14 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#4338ca] hover:brightness-110">
+              <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 bg-[#4338ca] hover:brightness-110">
                 <span>Escrow</span>
                 <span>P2P Trade</span>
               </Button>
             </Link>
             <Link to="/voting">
-              <Button className="w-full h-14 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#15803d] hover:brightness-110">
+              <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 bg-[#15803d] hover:brightness-110">
                 <span>Voting</span>
               </Button>
             </Link>
           </div>
 
           {/* Demo Mining Button */}
-          <div className="mt-3 flex items-center gap-2">
+          <div className="mt-2 flex justify-center items-center gap-2">
             <Button
               onClick={() => setMining(true)}
-              disabled={mining}
-              className={`flex-1 h-12 text-xs font-semibold ${
+              className={`px-4 py-2 rounded-lg border border-white/15 font-semibold ${
                 mining ? "bg-green-600 hover:brightness-110" : "bg-orange-500 hover:brightness-110"
-              } border border-white/15`}
+              }`}
             >
-              {mining ? "Mining" : "Start Mining"}
+              {mining ? "Mining..." : "Start Mining"}
             </Button>
-            <div className="w-16 text-center text-xs font-mono">
-              {(miningCount / 1000).toFixed(2)}s
-            </div>
+            <span className="text-xs">{(mineCounter / 1000).toFixed(1)}s</span>
           </div>
         </Card>
       </main>
