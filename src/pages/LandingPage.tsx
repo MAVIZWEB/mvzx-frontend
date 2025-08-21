@@ -215,9 +215,10 @@ export default function LandingPage() {
           <div className="relative flex flex-col items-center mb-3">
             <div className="absolute inset-x-3 -top-2"><LeaderboardGlass /></div>
             <div className="h-16" />
+            {/* Wheel with sector lines */}
             <div
               ref={wheelRef}
-              className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+              className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)] overflow-hidden"
               style={{
                 width: wheelSize,
                 height: wheelSize,
@@ -227,20 +228,31 @@ export default function LandingPage() {
               }}
             >
               {prizes.map((label, i) => {
-                const angle = (360 / prizes.length) * i + (360 / prizes.length) / 2;
+                const segment = 360 / prizes.length;
+                const angle = segment * i;
                 const colors = ["#FACC15", "#3B82F6", "#10B981"];
+
                 return (
                   <div
                     key={i}
-                    className="absolute left-1/2 top-1/2 px-2 py-1 rounded font-bold text-xs"
-                    style={{
-                      transform: `rotate(${angle}deg) translate(${wheelSize * 0.32}px) rotate(${-angle}deg)`,
-                      transformOrigin: "0 0",
-                      backgroundColor: colors[i % colors.length],
-                      color: "#000",
-                    }}
+                    className="absolute left-1/2 top-1/2 w-1/2 h-1/2 origin-left"
+                    style={{ transform: `rotate(${angle}deg)` }}
                   >
-                    {label}
+                    {/* Sector line */}
+                    <div
+                      className="absolute left-0 top-0 w-[1.5px] h-full bg-white/25"
+                      style={{ transform: `rotate(${segment}deg)` }}
+                    />
+                    {/* Sticker label inside sector */}
+                    <div
+                      className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 px-2 py-1 rounded font-bold text-xs text-black"
+                      style={{
+                        transform: `translate(${wheelSize * 0.23}px, 0) rotate(${-angle - segment / 2}deg)`,
+                        backgroundColor: colors[i % colors.length],
+                      }}
+                    >
+                      {label}
+                    </div>
                   </div>
                 );
               })}
