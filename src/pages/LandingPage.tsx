@@ -1,35 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, User, Wallet, Crown, Trophy } from "lucide-react";
+import { Menu, User, Trophy } from "lucide-react";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
-import Badge from "../components/UI/Badge";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 
-// --- Helpers ---
-function formatNumber(n: number) {
-  return n.toLocaleString(undefined, { maximumFractionDigits: 2 });
-}
-
-function playWinChime() {
-  try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.type = "triangle";
-    o.frequency.setValueAtTime(440, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
-    g.gain.setValueAtTime(0.001, ctx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
-    o.connect(g).connect(ctx.destination);
-    o.start();
-    o.stop(ctx.currentTime + 0.55);
-  } catch {}
-}
-
-// --- Leaderboard Glass ---
 function LeaderboardGlass() {
   const [rows, setRows] = useState<{ user: string; prize: string; ts: string }[]>([
     { user: "Grace", prize: "20 MVZx", ts: "2m ago" },
@@ -61,7 +37,7 @@ function LeaderboardGlass() {
   }, []);
 
   return (
-    <div className="rounded-2xl bg-white/6 backdrop-blur-md border border-white/10 shadow-md p-3 mb-2">
+    <div className="rounded-2xl bg-white/6 backdrop-blur-md border border-white/10 shadow-md p-3">
       <div className="flex items-center gap-2 mb-2">
         <Trophy className="w-4 h-4" />
         <p className="text-xs font-semibold tracking-wide">Recent Wins</p>
@@ -79,18 +55,41 @@ function LeaderboardGlass() {
   );
 }
 
-// --- Main Landing Page ---
+// Animated number component
+function AnimatedNumber({ value }: { value: number }) {
+  const [display, setDisplay] = useState(value);
+  useEffect(() => {
+    let start = display;
+    const diff = value - start;
+    if (diff === 0) return;
+    const steps = Math.min(Math.abs(diff), 20); // max steps
+    const stepValue = diff / steps;
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setDisplay(prev => prev + stepValue);
+      if (i >= steps) {
+        setDisplay(value);
+        clearInterval(interval);
+      }
+    }, 30);
+    return () => clearInterval(interval);
+  }, [value]);
+  return <span>{Math.floor(display)}</span>;
+}
+
 export default function LandingPage() {
   const navigate = useNavigate();
-
   const [isSignedIn, setIsSignedIn] = useState(false);
-  const [badge, setBadge] = useState<"Bronze" | "Silver" | "Gold" | "Platinum">("Bronze");
-  const [wins, setWins] = useState<number>(0);
-  const [wallet, setWallet] = useState<number>(0);
   const [demoMining, setDemoMining] = useState<number>(0);
   const [totalDemo, setTotalDemo] = useState<number>(0);
 
-  // Fetch landing summary
+  const prizes = useMemo(() => ["5 MVZx","10 MVZx","Try Again","15 MVZx","20 MVZx","50 MVZx"], []);
+  const [spinning, setSpinning] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [result, setResult] = useState<string | null>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     let mounted = true;
     if (!API_BASE) return;
@@ -100,21 +99,11 @@ export default function LandingPage() {
         if (!res.ok) return;
         const data = await res.json();
         if (!mounted) return;
-        if (data?.badge) setBadge(data.badge);
-        if (typeof data?.wins === "number") setWins(data.wins);
-        if (typeof data?.wallet === "number") setWallet(data.wallet);
         if (data?.signedIn) setIsSignedIn(true);
       } catch {}
     })();
     return () => { mounted = false; };
   }, []);
-
-  // Wheel
-  const prizes = useMemo(() => ["5 MVZx","10 MVZx","Try Again","15 MVZx","20 MVZx","50 MVZx"], []);
-  const [spinning, setSpinning] = useState(false);
-  const [rotation, setRotation] = useState(0);
-  const [result, setResult] = useState<string | null>(null);
-  const wheelRef = useRef<HTMLDivElement>(null);
 
   const spin = async () => {
     if (spinning) return;
@@ -141,12 +130,7 @@ export default function LandingPage() {
       const chosen = prizes[prizeIndex];
       setResult(chosen);
 
-      if (isSignedIn && chosen !== "Try Again") {
-        playWinChime();
-        setWins(w => w + 1);
-        setWallet(w => w + parseInt(chosen) || 0);
-      } else if (!isSignedIn) {
-        // Demo fake rewards
+      if (!isSignedIn) {
         const fake = Math.floor(Math.random() * 5) + 1;
         setDemoMining(dm => dm + fake);
         setTotalDemo(td => td + fake);
@@ -156,14 +140,13 @@ export default function LandingPage() {
     }, 4200);
   };
 
-  // Responsive wheel
   const vh = Math.max(600, window.innerHeight);
   const wheelSize = Math.min(260, Math.max(210, Math.floor(vh * 0.33)));
 
   return (
     <div className="min-h-screen w-full text-white flex flex-col"
-      style={{ background:"linear-gradient(180deg, #3a0006 0%, #7b0e17 100%)" }}>
-      
+      style={{ background:"radial-gradient(1200px 600px at 50% -10%, rgba(255,255,255,0.08), transparent), linear-gradient(180deg, #7b0e17 0%, #d90429 65%, #7b0e17 100%)" }}>
+
       {/* Header */}
       <header className="sticky top-0 z-30">
         <div className="flex items-center justify-between px-4 pt-3">
@@ -190,14 +173,22 @@ export default function LandingPage() {
         </div>
       </header>
 
-      {/* Demo Notification */}
       {!isSignedIn && <div className="text-center text-yellow-300 text-sm py-1 font-semibold">Demo Mode – Sign up to earn real MVZx!</div>}
 
-      {/* Leaderboard */}
-      <div className="px-3 mt-2"><LeaderboardGlass /></div>
+      {/* Feature Buttons */}
+      <div className="grid grid-cols-3 gap-2 mt-3 px-3">
+        <Link to="/buy"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#16a34a] hover:brightness-110"><span>MVZx</span><span>Buy & Earn</span></Button></Link>
+        <Link to="/airdrop"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#db2777] hover:brightness-110"><span>Airdrop</span></Button></Link>
+        <Link to="/mining"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#ca8a04] hover:brightness-110"><span>Mining</span></Button></Link>
+        <Link to="/directbuy"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#2563eb] hover:brightness-110"><span>Direct</span><span>Deposit Buy</span></Button></Link>
+        <Link to="/escrow"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#4338ca] hover:brightness-110"><span>Escrow</span><span>P2P Trade</span></Button></Link>
+        <Link to="/voting"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#15803d] hover:brightness-110"><span>Voting</span></Button></Link>
+      </div>
+
+      <div className="px-3 mt-3"><LeaderboardGlass /></div>
 
       {/* Wheel */}
-      <div className="flex flex-col items-center px-3 mt-2">
+      <div className="flex flex-col items-center px-3 mt-3">
         <div ref={wheelRef} className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
           style={{
             width: wheelSize,
@@ -224,26 +215,19 @@ export default function LandingPage() {
         {result && <div className="mt-2 text-sm font-semibold">{result==="Try Again"?"No luck—try again!":`🎉 You won: ${result}`}</div>}
       </div>
 
-      {/* Feature Buttons 3x2 */}
-      <div className="grid grid-cols-3 gap-2 mt-3 px-3">
-        <Link to="/buy"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#16a34a] hover:brightness-110"><span>MVZx</span><span>Buy & Earn</span></Button></Link>
-        <Link to="/airdrop"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#db2777] hover:brightness-110"><span>Airdrop</span></Button></Link>
-        <Link to="/mining"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#ca8a04] hover:brightness-110"><span>Mining</span></Button></Link>
-        <Link to="/directbuy"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#2563eb] hover:brightness-110"><span>Direct</span><span>Deposit Buy</span></Button></Link>
-        <Link to="/escrow"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#4338ca] hover:brightness-110"><span>Escrow</span><span>P2P Trade</span></Button></Link>
-        <Link to="/voting"><Button className="w-full h-16 flex flex-col justify-center items-center text-xs font-semibold leading-tight border border-white/15 bg-[#15803d] hover:brightness-110"><span>Voting</span></Button></Link>
-      </div>
-
-      {/* Demo Mining Counter */}
+      {/* Demo Mining Button */}
       {!isSignedIn && (
-        <Card className="m-3 p-3 rounded-2xl bg-white/6 border border-white/10 backdrop-blur-md shadow-md text-center">
-          <p className="text-sm font-semibold mb-1">Demo Mining</p>
-          <p className="text-xs">Current Session: <span className="font-bold">{demoMining} MVZx</span></p>
-          <p className="text-xs mt-1">Total Demo: <span className="font-bold">{totalDemo} MVZx</span></p>
-          <p className="text-[11px] mt-2 text-yellow-300">Sign up to start earning real MVZx!</p>
-        </Card>
+        <div className="flex items-center justify-center gap-3 mt-4 px-3">
+          <Button
+            onClick={() => setDemoMining(dm => { setTotalDemo(td => td + 1); return dm + 1; })}
+            className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow-lg flex items-center justify-center gap-2">
+            Start Mining
+          </Button>
+          <div className="text-white font-bold text-lg min-w-[60px] text-center">
+            <AnimatedNumber value={demoMining} /> MVZx
+          </div>
+        </div>
       )}
-
     </div>
   );
 }
