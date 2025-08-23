@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, User, Wallet, Trophy, Crown } from "lucide-react";
 
@@ -170,8 +170,8 @@ export default function LandingPage() {
             <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-white/30" />
           </div>
           <div className="text-center leading-tight">
-            <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ LIQUIDITY</h1>
-            <p className="text-[12px] opacity-95">MVZx Buy & Earn</p>
+            <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ SWAP</h1>
+            <p className="text-[12px] opacity-95">Token Buy & Earn</p>
           </div>
           <div className="flex items-center gap-3">
             <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-white/20 hover:bg-white/30 border border-white/20">
@@ -185,7 +185,7 @@ export default function LandingPage() {
         </div>
         <div className="px-4 pb-2 pt-1">
           <p className="text-[12px] opacity-95">
-            MAVIZ – Spin. Earn. Trade. Buy MVZx and unlock matrix rewards, P2P escrow trading, voting, mining & more.
+            MAVIZ – Spin. Earn. Trade. Buy MVZx and unlock affiliate rewards, P2P escrow trading, voting, mining & more.
           </p>
           {demoWarning && <p className="text-[12px] text-yellow-300 font-semibold mt-1">⚠️ This is a demo until signup</p>}
         </div>
@@ -227,20 +227,38 @@ export default function LandingPage() {
               }}
             >
               {prizes.map((label, i) => {
-                const angle = (360 / prizes.length) * i + (360 / prizes.length) / 2;
-                const colors = ["#FACC15", "#3B82F6", "#10B981"];
+                const angle = (360 / prizes.length) * i;
+                const colors = ["#FACC15", "#3B82F6", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
                 return (
                   <div
                     key={i}
-                    className="absolute left-1/2 top-1/2 px-2 py-1 rounded font-bold text-xs"
+                    className="absolute left-1/2 top-1/2 w-1/2 h-1/2 origin-0"
                     style={{
-                      transform: `rotate(${angle}deg) translate(${wheelSize * 0.32}px) rotate(${-angle}deg)`,
-                      transformOrigin: "0 0",
-                      backgroundColor: colors[i % colors.length],
-                      color: "#000",
+                      transform: `rotate(${angle}deg)`,
+                      overflow: "hidden",
                     }}
                   >
-                    {label}
+                    <div
+                      className="absolute w-full h-full transform origin-0"
+                      style={{
+                        transform: `rotate(${360 / prizes.length / 2}deg)`,
+                        backgroundColor: colors[i % colors.length],
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <span 
+                        className="text-xs font-bold text-black"
+                        style={{
+                          transform: `rotate(${-angle - (360 / prizes.length / 2)}deg)`,
+                          writingMode: "vertical-rl",
+                          textOrientation: "mixed"
+                        }}
+                      >
+                        {label}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
