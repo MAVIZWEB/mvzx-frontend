@@ -1,4 +1,4 @@
- // src/pages/Game.tsx
+// src/pages/Game.tsx
 import React, { useEffect, useState } from "react";
 import { api } from "../services/api";
 
