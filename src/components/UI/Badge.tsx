@@ -1,4 +1,5 @@
- import React from "react";
+ // src/components/UI/Badge.tsx
+import React from "react";
 
 interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
