@@ -1,80 +1,48 @@
-// Lightweight API client with auth token + JSON helpers
-const BASE = import.meta.env.VITE_API_BASE || "";
+// src/services/api.ts
+const API = import.meta.env.VITE_API_BASE?.replace(/\/$/, "") || "";
 
-export function setAuth(token: string) {
-  localStorage.setItem("mvzx_token", token);
-}
-export function getAuth(): string | null {
-  return localStorage.getItem("mvzx_token");
-}
+let AUTH = "";
+export function setAuth(token: string) { AUTH = token; localStorage.setItem("mvzx_jwt", token); }
+export function loadAuth() { AUTH = localStorage.getItem("mvzx_jwt") || ""; }
 
-async function req(path: string, opts: RequestInit = {}) {
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    ...(opts.headers as Record<string, string> | undefined),
-  };
-  const token = getAuth();
-  if (token) headers.Authorization = `Bearer ${token}`;
-
-  const res = await fetch(`${BASE}${path}`, { ...opts, headers });
+async function jfetch(path: string, init: RequestInit = {}) {
+  const res = await fetch(`${API}${path}`, {
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(AUTH ? { Authorization: `Bearer ${AUTH}` } : {}),
+      ...(init.headers || {}),
+    },
+    ...init,
+  });
   if (!res.ok) {
-    let msg = `${res.status} ${res.statusText}`;
-    try {
-      const j = await res.json();
-      if (j?.error) msg = j.error;
-    } catch {}
-    throw new Error(msg);
+    const txt = await res.text().catch(() => "");
+    throw new Error(txt || res.statusText || "Request failed");
   }
-  // some endpoints may return 204
-  try { return await res.json(); } catch { return null; }
+  const ct = res.headers.get("content-type") || "";
+  return ct.includes("application/json") ? res.json() : res.text();
 }
 
 export const api = {
-  // auth
-  signup: (email: string, pin: string) =>
-    req("/auth/signup", { method: "POST", body: JSON.stringify({ email, pin }) }),
-  login: (email: string, pin: string) =>
-    req("/auth/login", { method: "POST", body: JSON.stringify({ email, pin }) }),
+  // Auth
+  signup: (email: string, wallet: string) => jfetch("/auth/register", { method: "POST", body: JSON.stringify({ email, wallet }) }),
+  login: (email: string, wallet: string) => jfetch("/auth/login", { method: "POST", body: JSON.stringify({ email, wallet }) }),
 
-  // user / balance / matrix
-  summary: () => req("/user/summary"),
-  matrixStatus: () => req("/matrix/status"),
-  balance: () => req("/wallet/balance"),
-  leaderboard: () => req("/game/leaderboard"),
+  // Wallet / matrix
+  wallet: () => jfetch("/wallet/me"),
+  matrixStatus: () => jfetch("/matrix/status/me"),
 
-  // purchases
-  quote: (amount: number, currency: "USDT" | "NGN") =>
-    req("/purchase/quote", { method: "POST", body: JSON.stringify({ amount, currency }) }),
-  createOrder: (payload: {
-    method: "USDT" | "FLW" | "MANUAL";
-    amount: number;
-    currency: "USDT" | "NGN";
-  }) => req("/purchase", { method: "POST", body: JSON.stringify(payload) }),
-  manualDeposit: (payload: {
-    payerName: string;
-    receiptDate: string;
-    receiptTime: string;
-    phone: string;
-    amount: number;
-    currency: "NGN";
-  }) => req("/purchase/manual", { method: "POST", body: JSON.stringify(payload) }),
+  // Game / leaderboard
+  spin: () => jfetch("/game/spin", { method: "POST" }),
+  leaderboard: () => jfetch("/public/leaderboard"),
 
-  // airdrop
-  airdropClaim: () => req("/airdrop/claim", { method: "POST" }),
+  // Buy flow
+  quote: (amount:number, currency:"USDT"|"NGN") => jfetch("/payments/quote", { method: "POST", body: JSON.stringify({ amount, currency }) }),
+  createOrder: (params:any) => jfetch("/payments/create", { method: "POST", body: JSON.stringify(params) }),
+  flwVerify: (txId:string) => jfetch(`/payments/flutterwave/verify/${txId}`, { method: "GET" }),
+  manualDeposit: (payload:any) => jfetch("/payments/manual/submit", { method: "POST", body: JSON.stringify(payload) }),
 
-  // mining
-  miningClaim: () => req("/mining/claim", { method: "POST" }),
-
-  // escrow
-  listOffers: () => req("/escrow/offers"),
-  createOffer: (payload: { type: "BUY" | "SELL"; price: number; min: number; max: number }) =>
-    req("/escrow/offers", { method: "POST", body: JSON.stringify(payload) }),
-
-  // voting
-  getBallot: () => req("/voting/current"),
-  castVote: (choice: "UP" | "FLAT" | "DOWN") =>
-    req("/voting/vote", { method: "POST", body: JSON.stringify({ choice }) }),
-
-  // game
-  spin: () => req("/game/spin", { method: "POST" }),
+  // Escrow
+  listOffers: () => jfetch("/escrow/offers"),
+  createOffer: (payload:any) => jfetch("/escrow/offers", { method: "POST", body: JSON.stringify(payload) }),
 };
