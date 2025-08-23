@@ -1,4 +1,4 @@
- import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, User, Wallet, Trophy, Crown } from "lucide-react";
 
@@ -14,8 +14,18 @@ function formatNumber(n: number) {
 
 function playWinChime() {
   try {
-    const audio = new Audio("/sounds/win.mp3"); // put an mp3 in /public/sounds
-    audio.play().catch(() => {});
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = "triangle";
+    o.frequency.setValueAtTime(440, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+    g.gain.setValueAtTime(0.001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+    o.connect(g).connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + 0.55);
   } catch {}
 }
 
@@ -76,6 +86,8 @@ export default function LandingPage() {
   const [badge, setBadge] = useState<"Bronze" | "Silver" | "Gold" | "Platinum">("Bronze");
   const [wins, setWins] = useState<number>(0);
   const [wallet, setWallet] = useState<number>(0);
+  const [miningActive, setMiningActive] = useState(false);
+  const [minedAmount, setMinedAmount] = useState(0);
   const [demoWarning, setDemoWarning] = useState(true);
 
   useEffect(() => {
@@ -102,6 +114,7 @@ export default function LandingPage() {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
 
   const spin = async () => {
     if (spinning) return;
@@ -120,7 +133,7 @@ export default function LandingPage() {
     } catch {}
 
     const segment = 360 / prizes.length;
-    const stopAt = 360 * 5 + prizeIndex * segment + segment / 2;
+    const stopAt = rotation + 360 * 4 + (prizeIndex * segment + segment / 2);
     setRotation(stopAt);
 
     window.setTimeout(() => {
@@ -131,22 +144,33 @@ export default function LandingPage() {
         playWinChime();
         setWins((w) => w + 1);
       }
-    }, 4500);
+    }, 4200);
   };
 
-  const wheelSize = 280;
-  const colors = ["#f87171", "#fbbf24", "#34d399", "#60a5fa", "#a78bfa", "#f472b6"]; // different colors
+  const vh = Math.max(600, window.innerHeight);
+  const wheelSize = Math.min(260, Math.max(210, Math.floor(vh * 0.33)));
+
+  useEffect(() => {
+    if (!miningActive) return;
+    let start = Date.now();
+    let interval = setInterval(() => {
+      let elapsed = Date.now() - start;
+      setMinedAmount(Math.min(elapsed, 180000));
+      if (elapsed >= 180000) clearInterval(interval);
+    }, 50);
+    return () => clearInterval(interval);
+  }, [miningActive]);
 
   return (
-    <div className="min-h-screen w-full text-white flex flex-col" style={{ background: "linear-gradient(180deg,#3a0006,#0f0f0f)" }}>
+    <div className="min-h-screen w-full text-white flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-30">
         <div className="flex items-center justify-between px-4 pt-3" style={{ background: "#3a0006" }}>
           <div className="flex items-center gap-2">
-            <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MVZX" className="h-8 w-8 rounded-full ring-2 ring-white/30" />
+            <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-white/30" />
           </div>
           <div className="text-center leading-tight">
-            <h1 className="text-[15px] font-extrabold tracking-wide text-red-900">MAVIZ LIQUIDITY</h1>
+            <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ LIQUIDITY</h1>
             <p className="text-[12px] opacity-95">MVZx Buy & Earn</p>
           </div>
           <div className="flex items-center gap-3">
@@ -161,83 +185,103 @@ export default function LandingPage() {
         </div>
         <div className="px-4 pb-2 pt-1">
           <p className="text-[12px] opacity-95">
-            Buy MVZx with <strong>Flutterwave</strong> or <strong>USDT</strong> & unlock rewards: P2P trading, matrix, mining, voting & more.
+            MAVIZ – Spin. Earn. Trade. Buy MVZx and unlock matrix rewards, P2P escrow trading, voting, mining & more.
           </p>
-          {demoWarning && <p className="text-[12px] text-yellow-300 font-semibold mt-1">⚠️ Demo until signup</p>}
+          {demoWarning && <p className="text-[12px] text-yellow-300 font-semibold mt-1">⚠️ This is a demo until signup</p>}
         </div>
       </header>
 
       {/* Main */}
       <main className="flex-1 px-3 pb-3 overflow-auto">
+        {/* Wheel Card */}
         <Card className="relative rounded-2xl bg-white/10 border border-white/15 backdrop-blur-xl shadow-2xl p-3 mt-3">
           <div className="text-center mb-2">
             <h2 className="text-sm font-extrabold tracking-wide">INSTANT SPIN & EARN</h2>
           </div>
+          {/* Status */}
+          <div className="flex items-center justify-between gap-2 rounded-full px-3 py-2 bg-white/10 border border-white/15 mb-2">
+            <div className="flex items-center gap-1.5">
+              <Crown className="w-3.5 h-3.5 opacity-90" />
+              <Badge>{badge}</Badge>
+            </div>
+            <div className="text-[12px]">Wins: <span className="font-semibold">{formatNumber(wins)}</span></div>
+            <div className="flex items-center gap-1 text-[12px]">
+              <Wallet className="w-3.5 h-3.5 opacity-90" />
+              <span>{formatNumber(wallet)} MVZx</span>
+            </div>
+          </div>
 
-          {/* Wheel */}
-          <div className="flex flex-col items-center">
-            <div className="relative" style={{ width: wheelSize, height: wheelSize }}>
-              <div
-                className="rounded-full"
-                style={{
-                  width: wheelSize,
-                  height: wheelSize,
-                  border: "6px solid rgba(255,255,255,0.3)",
-                  transform: `rotate(${rotation}deg)`,
-                  transition: spinning ? "transform 4.5s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
-                }}
-              >
-                {prizes.map((label, i) => {
-                  const segment = 360 / prizes.length;
-                  const startAngle = i * segment;
-                  return (
-                    <div
-                      key={i}
-                      style={{
-                        position: "absolute",
-                        width: "50%",
-                        height: "50%",
-                        backgroundColor: colors[i],
-                        transformOrigin: "100% 100%",
-                        transform: `rotate(${startAngle}deg) skewY(${90 - segment}deg)`,
-                        clipPath: "polygon(0 0, 100% 0, 100% 100%)",
-                      }}
-                    >
-                      <div
-                        style={{
-                          position: "absolute",
-                          top: "30%",
-                          left: "105%",
-                          transform: `rotate(${segment / 2}deg)`,
-                          transformOrigin: "0 0",
-                          fontSize: "11px",
-                          fontWeight: "bold",
-                          color: "#000",
-                        }}
-                      >
-                        {label}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="absolute top-[-12px] left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-transparent border-b-yellow-300" />
+          {/* Wheel + Leaderboard */}
+          <div className="relative flex flex-col items-center mb-3">
+            <div className="absolute inset-x-3 -top-2"><LeaderboardGlass /></div>
+            <div className="h-16" />
+            <div
+              ref={wheelRef}
+              className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+              style={{
+                width: wheelSize,
+                height: wheelSize,
+                transform: `rotate(${rotation}deg)`,
+                transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
+                background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 55%, transparent 60%)",
+              }}
+            >
+              {prizes.map((label, i) => {
+                const angle = (360 / prizes.length) * i + (360 / prizes.length) / 2;
+                const colors = ["#FACC15", "#3B82F6", "#10B981"];
+                return (
+                  <div
+                    key={i}
+                    className="absolute left-1/2 top-1/2 px-2 py-1 rounded font-bold text-xs"
+                    style={{
+                      transform: `rotate(${angle}deg) translate(${wheelSize * 0.32}px) rotate(${-angle}deg)`,
+                      transformOrigin: "0 0",
+                      backgroundColor: colors[i % colors.length],
+                      color: "#000",
+                    }}
+                  >
+                    {label}
+                  </div>
+                );
+              })}
             </div>
 
-            <Button onClick={spin} disabled={spinning} className="mt-3 w-full max-w-xs py-2 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold tracking-wide">
+            <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[18px] border-transparent border-b-yellow-300 drop-shadow" />
+            <Button onClick={spin} disabled={spinning} className="w-full max-w-xs py-2 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold tracking-wide">
               {spinning ? "Spinning..." : "SPIN NOW"}
             </Button>
             {result && <div className="mt-2 text-sm font-semibold">{result === "Try Again" ? "No luck—try again!" : `🎉 You won: ${result}`}</div>}
           </div>
 
-          {/* Actions */}
-          <div className="grid grid-cols-2 gap-3 mt-5">
-            <Link to="/buy">
-              <Button className="w-full py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold">Buy with Flutterwave</Button>
-            </Link>
-            <Link to="/buy-usdt">
-              <Button className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold">Buy with USDT</Button>
-            </Link>
+          {/* Feature Buttons */}
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            {[
+              { to: "/buy", labels: ["MVZx", "Buy & Earn"], bg: "#16a34a" },
+              { to: "/airdrop", labels: ["Airdrop"], bg: "#db2777" },
+              { to: "/mining", labels: ["Mining"], bg: "#ca8a04" },
+              { to: "/directbuy", labels: ["Direct", "Deposit Buy"], bg: "#2563eb" },
+              { to: "/escrow", labels: ["Escrow", "P2P Trade"], bg: "#4338ca" },
+              { to: "/voting", labels: ["Voting"], bg: "#15803d" },
+            ].map((b, i) => (
+              <Link key={i} to={b.to}>
+                <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 hover:brightness-110" style={{ backgroundColor: b.bg }}>
+                  {b.labels.map((l, j) => <span key={j}>{l}</span>)}
+                </Button>
+              </Link>
+            ))}
+          </div>
+
+          {/* Demo Mining */}
+          <div className="mt-4 flex justify-center items-center gap-3">
+            <Button
+              onClick={() => setMiningActive(true)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-[12px] ${
+                miningActive ? "bg-green-600 hover:bg-green-700" : "bg-orange-500 hover:bg-orange-600"
+              }`}
+            >
+              {miningActive ? "Mining" : "Start Mining"}
+            </Button>
+            <span className="font-mono text-xs">{((minedAmount / 1000).toFixed(2))}s</span>
           </div>
         </Card>
       </main>
