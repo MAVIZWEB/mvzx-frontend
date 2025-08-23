@@ -171,7 +171,7 @@ export default function LandingPage() {
             <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-white/30" />
           </div>
           <div className="text-center leading-tight">
-            <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ SWAP</h1>
+            <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ SWAPS</h1>
             <p className="text-[12px] opacity-95">Token Swap & Earn</p>
           </div>
           <div className="flex items-center gap-3">
