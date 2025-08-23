@@ -1,6 +1,7 @@
- import React, { useEffect, useMemo, useRef, useState } from "react";
+ // src/pages/LandingPage.tsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, User, Wallet, Trophy, Crown } from "lucide-react";
+import { Menu, User, Wallet, Trophy, Crown, Sparkles } from "lucide-react";
 
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
@@ -62,7 +63,7 @@ function LeaderboardGlass() {
   }, []);
 
   return (
-    <div className="rounded-2xl bg-white/6 backdrop-blur-md border border-white/10 shadow-md p-3">
+    <Card className="bg-white/6 backdrop-blur-md border-white/10 p-3">
       <div className="flex items-center gap-2 mb-2">
         <Trophy className="w-4 h-4" />
         <p className="text-xs font-semibold tracking-wide">Recent Wins</p>
@@ -76,7 +77,7 @@ function LeaderboardGlass() {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -162,10 +163,10 @@ export default function LandingPage() {
   }, [miningActive]);
 
   return (
-    <div className="min-h-screen w-full text-white flex flex-col">
+    <div className="min-h-screen w-full text-white flex flex-col" style={{ background: "linear-gradient(135deg, #3a0006 0%, #1a0020 50%, #000524 100%)" }}>
       {/* Header */}
-      <header className="sticky top-0 z-30">
-        <div className="flex items-center justify-between px-4 pt-3" style={{ background: "#3a0006" }}>
+      <header className="sticky top-0 z-30 bg-[#3a0006]/95 backdrop-blur-sm border-b border-white/10">
+        <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex items-center gap-2">
             <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-white/30" />
           </div>
@@ -198,8 +199,9 @@ export default function LandingPage() {
           <div className="text-center mb-2">
             <h2 className="text-sm font-extrabold tracking-wide">INSTANT SPIN & EARN</h2>
           </div>
+          
           {/* Status */}
-          <div className="flex items-center justify-between gap-2 rounded-full px-3 py-2 bg-white/10 border border-white/15 mb-2">
+          <Card className="flex items-center justify-between gap-2 rounded-full px-3 py-2 bg-white/10 border border-white/15 mb-2">
             <div className="flex items-center gap-1.5">
               <Crown className="w-3.5 h-3.5 opacity-90" />
               <Badge>{badge}</Badge>
@@ -209,66 +211,86 @@ export default function LandingPage() {
               <Wallet className="w-3.5 h-3.5 opacity-90" />
               <span>{formatNumber(wallet)} MVZx</span>
             </div>
-          </div>
+          </Card>
 
           {/* Wheel + Leaderboard */}
           <div className="relative flex flex-col items-center mb-3">
             <div className="absolute inset-x-3 -top-2"><LeaderboardGlass /></div>
             <div className="h-16" />
-            <div
-              ref={wheelRef}
-              className="relative rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
-              style={{
-                width: wheelSize,
-                height: wheelSize,
-                transform: `rotate(${rotation}deg)`,
-                transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
-                background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 55%, transparent 60%)",
-              }}
-            >
-              {prizes.map((label, i) => {
-                const angle = (360 / prizes.length) * i;
-                const colors = ["#FACC15", "#3B82F6", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
-                return (
-                  <div
-                    key={i}
-                    className="absolute left-1/2 top-1/2 w-1/2 h-1/2 origin-0"
-                    style={{
-                      transform: `rotate(${angle}deg)`,
-                      overflow: "hidden",
-                    }}
-                  >
+            
+            {/* Wheel Container */}
+            <div className="relative" style={{ width: wheelSize, height: wheelSize }}>
+              <div
+                ref={wheelRef}
+                className="absolute inset-0 rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+                style={{
+                  transform: `rotate(${rotation}deg)`,
+                  transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
+                  background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 55%, transparent 60%)",
+                }}
+              >
+                {prizes.map((label, i) => {
+                  const segmentAngle = 360 / prizes.length;
+                  const angle = i * segmentAngle;
+                  const colors = ["#FACC15", "#3B82F6", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
+                  
+                  return (
                     <div
-                      className="absolute w-full h-full transform origin-0"
-                      style={{
-                        transform: `rotate(${360 / prizes.length / 2}deg)`,
-                        backgroundColor: colors[i % colors.length],
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                      }}
+                      key={i}
+                      className="absolute left-1/2 top-1/2 origin-0 w-1/2 h-1/2"
+                      style={{ transform: `rotate(${angle}deg)` }}
                     >
-                      <span 
-                        className="text-xs font-bold text-black"
+                      <div
+                        className="absolute w-full h-full flex items-center justify-center"
                         style={{
-                          transform: `rotate(${-angle - (360 / prizes.length / 2)}deg)`,
-                          writingMode: "vertical-rl",
-                          textOrientation: "mixed"
+                          transform: `rotate(${segmentAngle / 2}deg)`,
+                          backgroundColor: colors[i % colors.length],
+                          clipPath: "polygon(0 0, 100% 0, 100% 100%)",
                         }}
                       >
-                        {label}
-                      </span>
+                        <span 
+                          className="text-xs font-bold text-black absolute top-1/2 right-1/4"
+                          style={{ 
+                            transform: "rotate(-90deg) translateX(-50%)",
+                            transformOrigin: "center"
+                          }}
+                        >
+                          {label}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+              
+              {/* Center circle */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-1/4 h-1/4 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
+                  <Sparkles className="w-1/2 h-1/2 text-yellow-300" />
+                </div>
+              </div>
             </div>
 
+            {/* Pointer */}
             <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[18px] border-transparent border-b-yellow-300 drop-shadow" />
-            <Button onClick={spin} disabled={spinning} className="w-full max-w-xs py-2 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold tracking-wide">
+            
+            {/* Spin Button */}
+            <Button 
+              onClick={spin} 
+              disabled={spinning} 
+              className="w-full max-w-xs py-2 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold tracking-wide"
+            >
               {spinning ? "Spinning..." : "SPIN NOW"}
             </Button>
-            {result && <div className="mt-2 text-sm font-semibold">{result === "Try Again" ? "No luck—try again!" : `🎉 You won: ${result}`}</div>}
+            
+            {/* Result Display */}
+            {result && (
+              <Card className="mt-2 p-2 bg-green-500/20 border-green-500/30">
+                <div className="text-sm font-semibold text-center">
+                  {result === "Try Again" ? "No luck—try again!" : `🎉 You won: ${result}`}
+                </div>
+              </Card>
+            )}
           </div>
 
           {/* Feature Buttons */}
@@ -290,17 +312,27 @@ export default function LandingPage() {
           </div>
 
           {/* Demo Mining */}
-          <div className="mt-4 flex justify-center items-center gap-3">
-            <Button
-              onClick={() => setMiningActive(true)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-[12px] ${
-                miningActive ? "bg-green-600 hover:bg-green-700" : "bg-orange-500 hover:bg-orange-600"
-              }`}
-            >
-              {miningActive ? "Mining" : "Start Mining"}
-            </Button>
-            <span className="font-mono text-xs">{((minedAmount / 1000).toFixed(2))}s</span>
-          </div>
+          <Card className="mt-4 p-3 bg-white/5 border-white/10">
+            <div className="flex justify-center items-center gap-3">
+              <Button
+                onClick={() => setMiningActive(!miningActive)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-[12px] ${
+                  miningActive ? "bg-green-600 hover:bg-green-700" : "bg-orange-500 hover:bg-orange-600"
+                }`}
+              >
+                {miningActive ? "Stop Mining" : "Start Mining"}
+              </Button>
+              <span className="font-mono text-xs">{((minedAmount / 1000).toFixed(2))}s</span>
+            </div>
+            {miningActive && (
+              <div className="mt-2 w-full bg-gray-700 rounded-full h-2">
+                <div 
+                  className="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${(minedAmount / 180000) * 100}%` }}
+                ></div>
+              </div>
+            )}
+          </Card>
         </Card>
       </main>
 
