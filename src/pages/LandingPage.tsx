@@ -111,7 +111,7 @@ export default function LandingPage() {
     };
   }, []);
 
-  const prizes = useMemo(() => ["5 MVZx", "10 MVZx", "Try Again", "15 MVZx", "20 MVZx", "50 MVZx"], []);
+  const prizes = useMemo(() => ["1 MVZx", "2 MVZx", "Try Again", "3 MVZx", "5 MVZx", "8 MVZx"], []);
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(null);
@@ -172,7 +172,7 @@ export default function LandingPage() {
           </div>
           <div className="text-center leading-tight">
             <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ SWAP</h1>
-            <p className="text-[12px] opacity-95">Token Buy & Earn</p>
+            <p className="text-[12px] opacity-95">Token Swap & Earn</p>
           </div>
           <div className="flex items-center gap-3">
             <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-white/20 hover:bg-white/30 border border-white/20">
@@ -186,7 +186,7 @@ export default function LandingPage() {
         </div>
         <div className="px-4 pb-2 pt-1">
           <p className="text-[12px] opacity-95">
-            MAVIZ – Spin. Earn. Trade. Buy MVZx and unlock affiliate rewards, P2P escrow trading, voting, mining & more.
+             MAVIZ – P2P Escrow Swap, Games, Airdrop, Mining, Unlock Affiliate Rewards in USDT, Spin & Earn, Voting & more
           </p>
           {demoWarning && <p className="text-[12px] text-yellow-300 font-semibold mt-1">⚠️ This is a demo until signup</p>}
         </div>
