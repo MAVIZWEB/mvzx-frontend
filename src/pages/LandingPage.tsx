@@ -1,120 +1,294 @@
- // src/pages/LandingPage.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
+ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, User, Wallet, Trophy, Crown, Sparkles, Coins, Gift, Cpu, Handshake, Vote, Building } from "lucide-react";
+import { Menu, User, Wallet, Trophy, Crown, Sparkles, Coins, Gift, Cpu, Handshake, Vote, Building, Volume2, VolumeX } from "lucide-react";
 import { api, loadAuth, isAuthenticated } from "../services/api";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
 import Badge from "../components/UI/Badge";
 import AuthModal from "../components/AuthModal";
 
+/* ----------------------------- Leaderboard ----------------------------- */
 function LeaderboardGlass() {
-  const [rows, setRows] = useState<{ user: string; prize: string; ts: string }[]>([]);
-  useEffect(()=>{ let m=true; (async()=>{
-    try {
-      const res = await api.getLeaderboard();
-      if(m && Array.isArray(res?.items)) setRows(res.items.slice(0,6).map((r:any)=>({user:r.user||"User", prize:r.prize||"—", ts:r.ts||""})));
-    } catch {}
-  })(); return ()=>{m=false}; }, []);
+  const [rows, setRows] = useState<{ user: string; prize: string; ts: string }[]>([
+    { user: "Edu", prize: "20 MVZx", ts: "2m ago" },
+    { user: "Isa", prize: "10 MVZx", ts: "5m ago" },
+    { user: "Ike", prize: "50 MVZx", ts: "12m ago" },
+    { user: "Ayo", prize: "5 MVZx", ts: "18m ago" },
+  ]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.getLeaderboard?.();
+        if (mounted && Array.isArray(res?.items)) {
+          setRows(
+            res.items.slice(0, 6).map((r: any) => ({
+              user: String(r.user ?? "User"),
+              prize: String(r.prize ?? "—"),
+              ts: String(r.ts ?? ""),
+            }))
+          );
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   return (
     <Card className="bg-white/6 backdrop-blur-md border-white/10 p-3">
-      <div className="flex items-center gap-2 mb-2"><Trophy className="w-4 h-4" /><p className="text-xs font-semibold">Recent Wins</p></div>
+      <div className="flex items-center gap-2 mb-2">
+        <Trophy className="w-4 h-4" />
+        <p className="text-xs font-semibold tracking-wide">Recent Wins</p>
+      </div>
       <div className="max-h-20 overflow-auto pr-1">
-        {rows.map((r,i)=>(<div key={i} className="flex items-center justify-between text-xs py-1 border-b border-white/5 last:border-b-0">
-          <span className="truncate">{r.user}</span><span className="font-semibold">{r.prize}</span><span className="text-[11px] opacity-80">{r.ts}</span>
-        </div>))}
+        {rows.map((r, i) => (
+          <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-white/5 last:border-b-0">
+            <span className="truncate">{r.user}</span>
+            <span className="font-semibold">{r.prize}</span>
+            <span className="text-[11px] opacity-80">{r.ts}</span>
+          </div>
+        ))}
       </div>
     </Card>
   );
 }
 
+/* --------------------------------- Page -------------------------------- */
 export default function LandingPage() {
   const navigate = useNavigate();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [userLoggedIn, setUserLoggedIn] = useState(isAuthenticated());
   const [badge, setBadge] = useState("Bronze");
   const [wins, setWins] = useState(0);
-  const [walletBalance, setWalletBalance] = useState(0);
+  const [wallet, setWallet] = useState(0);
+
+  // Mining
   const [miningActive, setMiningActive] = useState(false);
-  const [minedAmount, setMinedAmount] = useState(0);
-  const [demoWarning, setDemoWarning] = useState(!userLoggedIn);
+  const [minedMs, setMinedMs] = useState(0);
+
+  // Spin
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [result, setResult] = useState<string | null>(null);
-  const wheelRef = useRef<HTMLDivElement|null>(null);
-  const prizes = useMemo(()=>["1 MVZx","2 MVZx","Try Again","3 MVZx","5 MVZx","8 MVZx"], []);
-  const segment = 360 / prizes.length;
 
-  useEffect(()=>{ if(userLoggedIn) loadUserData(); },[userLoggedIn]);
+  // Free spins
+  const [freeSpins, setFreeSpins] = useState<number>(() => {
+    const s = localStorage.getItem("mvzx_free_spins");
+    return s ? Math.max(0, parseInt(s)) : 3;
+  });
 
-  async function loadUserData(){
+  // Demo notice until signup
+  const [demoWarning, setDemoWarning] = useState(!userLoggedIn);
+
+  // Sound
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [muted, setMuted] = useState(false);
+
+  // Wheel prizes (fixed 6 sectors)
+  const prizes = useMemo(
+    () => [
+      { label: "0.125 MVZx", short: "0.125", color: "#60a5fa", isLose: false },
+      { label: "0.25 MVZx", short: "0.25", color: "#16a34a", isLose: false },
+      { label: "Try Again", short: "Try", color: "#6b7280", isLose: true }, // #3 silent / no reward
+      { label: "0.5 MVZx", short: "0.5", color: "#f59e0b", isLose: false },
+      { label: "0.75 MVZx", short: "0.75", color: "#8b5cf6", isLose: false },
+      { label: "3 MVZx 🎉", short: "3", color: "#fbbf24", isLose: false },
+    ],
+    []
+  );
+
+  /* ------------------------------- Effects ------------------------------ */
+  useEffect(() => {
+    if (userLoggedIn) loadUserData();
+  }, [userLoggedIn]);
+
+  // Mining ticker (client visual). If your backend returns remaining/elapsed,
+  // we also poll it occasionally to stay in sync.
+  useEffect(() => {
+    let t: any;
+    let poll: any;
+
+    if (miningActive) {
+      const start = Date.now() - minedMs;
+      t = setInterval(() => {
+        const now = Date.now();
+        const next = now - start;
+        setMinedMs(next > 180000 ? 180000 : next);
+        if (next >= 180000) {
+          clearInterval(t);
+        }
+      }, 50);
+
+      // Optional backend sync
+      poll = setInterval(async () => {
+        try {
+          const s = await api.miningStatus?.();
+          if (s && typeof s.elapsedMs === "number") {
+            setMinedMs(Math.min(180000, s.elapsedMs));
+          }
+        } catch {
+          /* ignore */
+        }
+      }, 4000);
+    }
+    return () => {
+      if (t) clearInterval(t);
+      if (poll) clearInterval(poll);
+    };
+  }, [miningActive]);
+
+  /* ------------------------------- Helpers ------------------------------ */
+  const loadUserData = async () => {
     try {
-      const [wallet, matrix] = await Promise.all([ api.getWallet().catch(()=>({balances:[]})), api.getMatrixStatus().catch(()=>null) ]);
-      const mvzx = wallet.balances?.find((b:any)=>b.token==="MVZx")?.amount;
-      setWalletBalance(mvzx ? Number(mvzx) : 0);
-      if(matrix?.badge) setBadge(matrix.badge.name || "Bronze");
-      setDemoWarning(false);
-    } catch (e) { console.error(e); }
-  }
+      const [walletRes, matrixRes] = await Promise.all([
+        api.getWallet?.().catch(() => ({ balances: [] })),
+        api.getMatrixStatus?.().catch(() => null),
+      ]);
 
-  // sound
-  function playWinChime() {
+      const mvzxBalance = walletRes?.balances?.find((b: any) => b.token === "MVZx");
+      setWallet(mvzxBalance ? parseFloat(mvzxBalance.amount) : 0);
+
+      if (matrixRes?.badge) setBadge(matrixRes.badge.name);
+    } catch (error) {
+      console.error("Failed to load user data:", error);
+    }
+  };
+
+  const segmentDeg = 360 / prizes.length;
+  const wheelGradient = useMemo(() => {
+    // Build a conic-gradient with our custom colors
+    const stops = prizes
+      .map((p, i) => {
+        const s = i * segmentDeg;
+        const e = (i + 1) * segmentDeg;
+        return `${p.color} ${s}deg ${e}deg`;
+      })
+      .join(", ");
+    return `conic-gradient(${stops})`;
+  }, [prizes, segmentDeg]);
+
+  // Label transforms for each sector (place near outer ring)
+  const sectorLabels = useMemo(
+    () =>
+      prizes.map((_p, i) => {
+        const angle = i * segmentDeg + segmentDeg / 2; // center of sector
+        return {
+          angle,
+          style: {
+            transform: `rotate(${angle}deg) translate(${Math.min(48, 44)}%) rotate(${-angle}deg)`,
+          } as React.CSSProperties,
+        };
+      }),
+    [prizes, segmentDeg]
+  );
+
+  const playWinSound = () => {
+    const el = audioRef.current;
+    if (!el || muted) return;
     try {
-      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.type = "triangle";
-      o.frequency.setValueAtTime(440, ctx.currentTime);
-      o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
-      g.gain.setValueAtTime(0.001, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.25, ctx.currentTime + 0.01);
-      g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
-      o.connect(g).connect(ctx.destination);
-      o.start();
-      o.stop(ctx.currentTime + 0.55);
+      el.currentTime = 0;
+      el.play().catch(() => {});
     } catch {}
-  }
+  };
 
+  const setFreeSpinsSafe = (n: number) => {
+    setFreeSpins(n);
+    localStorage.setItem("mvzx_free_spins", String(n));
+  };
+
+  /* --------------------------------- Spin -------------------------------- */
   const spin = async () => {
     if (spinning) return;
+
+    // Enforce free spins for non-bought users if you want:
+    if (!userLoggedIn && freeSpins <= 0) {
+      setResult("Sign up / buy MVZx to continue spinning.");
+      setIsAuthModalOpen(true);
+      return;
+    }
+
     setSpinning(true);
     setResult(null);
 
-    // ask backend for result (backend authoritative)
-    let serverIndex = Math.floor(Math.random() * prizes.length); // fallback
-    try {
-      const res = await api.spin(prizes);
-      if (typeof res?.prizeIndex === "number") serverIndex = Math.max(0, Math.min(prizes.length-1, res.prizeIndex));
-    } catch(e){ console.warn("spin api failed", e); }
+    // default random
+    let prizeIndex = Math.floor(Math.random() * prizes.length);
 
-    // animate wheel to serverIndex
-    const current = rotation % 360;
-    // make sure we rotate multiple full turns + land at correct sector center
-    const target = (360 * 5) + (serverIndex * segment + segment/2);
-    const stopAt = current + target;
+    try {
+      // If backend present, prefer backend
+      const res = await api.spin?.();
+      // Accept either prizeIndex or amount mapping
+      if (typeof res?.prizeIndex === "number") {
+        prizeIndex = Math.max(0, Math.min(prizes.length - 1, res.prizeIndex));
+      } else if (typeof res?.amount === "number") {
+        const map: Record<string, number> = {
+          "0.125": 0,
+          "0.25": 1,
+          "0.5": 3,
+          "0.75": 4,
+          "3": 5,
+        };
+        const key = String(res.amount);
+        if (key in map) prizeIndex = map[key];
+      }
+    } catch {
+      // keep random fallback
+    }
+
+    // Animate rotation to the chosen sector (center)
+    const stopAt = rotation + 360 * 4 + (prizeIndex * segmentDeg + segmentDeg / 2);
     setRotation(stopAt);
 
-    // reveal after animation
-    setTimeout(()=>{
-      const chosen = prizes[serverIndex] ?? "Try Again";
-      setResult(chosen);
+    window.setTimeout(() => {
+      const chosen = prizes[prizeIndex];
       setSpinning(false);
-      if (chosen !== "Try Again") {
-        playWinChime();
-        setWins(w=>w+1);
-        // update local wallet display (reload balances)
-        if (userLoggedIn) loadUserData();
+
+      // free spins bookkeeping (count every spin)
+      if (!userLoggedIn && freeSpins > 0) setFreeSpinsSafe(freeSpins - 1);
+
+      if (chosen.isLose) {
+        setResult("Try again! 🎯");
+        // NO SOUND
+      } else {
+        setResult(`🎉 You won ${chosen.label}`);
+        playWinSound();
+        setWins((w) => w + 1);
+        // Optionally refresh balances after prize credit
+        loadUserData();
       }
-    }, 4400);
+    }, 4200);
   };
 
-  // wheel size responsive
-  const vh = Math.max(600, window.innerHeight);
-  const wheelSize = Math.min(320, Math.max(220, Math.floor(vh * 0.33)));
+  /* -------------------------------- Mining ------------------------------- */
+  const toggleMining = async () => {
+    if (miningActive) {
+      setMiningActive(false);
+      try {
+        await api.stopMining?.();
+      } catch {}
+      return;
+    }
+    // Start
+    try {
+      await api.startMining?.();
+    } catch {
+      /* fall back to client-only timer */
+    }
+    setMinedMs(0);
+    setMiningActive(true);
+  };
 
-  // rendering sectors with proper rotation transform
+  /* ----------------------------- Layout sizes ---------------------------- */
+  const vh = Math.max(600, typeof window !== "undefined" ? window.innerHeight : 720);
+  const wheelSize = Math.min(260, Math.max(210, Math.floor(vh * 0.33)));
+
   return (
     <div className="min-h-screen w-full text-white flex flex-col" style={{ background: "linear-gradient(135deg, #3a0006 0%, #1a0020 50%, #000524 100%)" }}>
+      {/* Header */}
       <header className="sticky top-0 z-30 bg-[#FFD700] border-b border-yellow-300">
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex items-center gap-2">
@@ -122,142 +296,210 @@ export default function LandingPage() {
           </div>
           <div className="text-center leading-tight">
             <h1 className="text-[15px] font-extrabold tracking-wide text-gray-900">MAVIZ SWAPS</h1>
-            <p className="text-[12px] text-gray-800">Token Swap & Earn</p>
+            <p className="text-[12px] text-gray-800">Token Swap &amp; Earn</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={() => userLoggedIn ? navigate("/dashboard") : setIsAuthModalOpen(true)} className="px-3 py-1 text-xs rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600 text-white">
-              <User className="w-3.5 h-3.5 mr-1" />{userLoggedIn ? "Dashboard" : "Sign Up"}
+            <Button
+              onClick={() => (userLoggedIn ? navigate("/dashboard") : setIsAuthModalOpen(true))}
+              className="px-3 py-1 text-xs rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600 text-white"
+            >
+              <User className="w-3.5 h-3.5 mr-1" />
+              {userLoggedIn ? "Dashboard" : "Sign Up"}
             </Button>
-            <Button onClick={() => userLoggedIn ? navigate("/dashboard") : setIsAuthModalOpen(true)} className="px-2.5 py-1 rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600">
+            <Button
+              onClick={() => (userLoggedIn ? navigate("/dashboard") : setIsAuthModalOpen(true))}
+              className="px-2.5 py-1 rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600"
+            >
               <Menu className="w-4 h-4 text-white" />
             </Button>
           </div>
         </div>
         <div className="px-4 pb-2 pt-1">
-          <p className="text-[12px] text-gray-800">MAVIZ – P2P Escrow Swap, Games, Airdrop, Mining, Unlock Affiliate Rewards in USDT, Spin & Earn, Voting & more</p>
-          {demoWarning && <p className="text-[12px] text-orange-800 font-semibold mt-1">⚠️ This is a demo until signup</p>}
+          <p className="text-[12px] text-gray-800">MAVIZ – P2P Escrow Swap, Games, Airdrop, Mining, Unlock Affiliate Rewards in USDT, Spin &amp; Earn, Voting &amp; more</p>
+          {!userLoggedIn && <p className="text-[12px] text-orange-800 font-semibold mt-1">⚠️ Demo mode: 3 free spins</p>}
         </div>
       </header>
 
+      {/* Main */}
       <main className="flex-1 px-3 pb-3 overflow-auto">
         <Card className="relative rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl p-3 mt-3">
-          <div className="text-center mb-2"><h2 className="text-sm font-extrabold tracking-wide">INSTANT SPIN & EARN</h2></div>
+          {/* Status */}
+          <div className="text-center mb-2">
+            <h2 className="text-sm font-extrabold tracking-wide">INSTANT SPIN &amp; EARN</h2>
+          </div>
 
           <Card className="flex items-center justify-between gap-2 rounded-full px-3 py-2 bg-white/10 border border-white/15 mb-2">
-            <div className="flex items-center gap-1.5"><Crown className="w-3.5 h-3.5 opacity-90" /><Badge>{badge}</Badge></div>
-            <div className="text-[12px]">Wins: <span className="font-semibold">{wins}</span></div>
-            <div className="flex items-center gap-1 text-[12px]"><Wallet className="w-3.5 h-3.5 opacity-90" /><span>{walletBalance.toFixed(2)} MVZx</span></div>
+            <div className="flex items-center gap-1.5">
+              <Crown className="w-3.5 h-3.5 opacity-90" />
+              <Badge>{badge}</Badge>
+            </div>
+            <div className="text-[12px]">
+              Wins: <span className="font-semibold">{wins}</span>
+            </div>
+            <div className="flex items-center gap-1 text-[12px]">
+              <Wallet className="w-3.5 h-3.5 opacity-90" />
+              <span>{wallet.toFixed(2)} MVZx</span>
+            </div>
           </Card>
 
+          {/* Wheel + Leaderboard */}
           <div className="relative flex flex-col items-center mb-3">
-            <div className="absolute inset-x-3 -top-2 z-10"><LeaderboardGlass /></div>
+            <div className="absolute inset-x-3 -top-2 z-10">
+              <LeaderboardGlass />
+            </div>
             <div className="h-16" />
 
-            <div style={{ width: wheelSize, height: wheelSize }} className="relative z-20">
-              {/* spinning wheel */}
-              <div ref={wheelRef}
-                   style={{
-                     width: wheelSize,
-                     height: wheelSize,
-                     borderRadius: "50%",
-                     transform: `rotate(${rotation}deg)`,
-                     transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
-                     position: "relative",
-                     overflow: "hidden",
-                     boxShadow: "0 0 30px rgba(255,255,255,0.08)",
-                   }}>
-                {/* render sectors */}
-                {prizes.map((label, i) => {
-                  const angle = (360 / prizes.length) * i;
-                  const rad = (wheelSize / 2) * 0.85;
-                  const textAngle = angle + segment / 2;
-                  const x = (wheelSize / 2) + Math.cos((textAngle - 90) * (Math.PI/180)) * rad;
-                  const y = (wheelSize / 2) + Math.sin((textAngle - 90) * (Math.PI/180)) * rad;
-                  const bg = i % 2 === 0 ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.06)";
-                  return (
-                    <div key={i} style={{
-                      position: "absolute",
-                      left: 0, top: 0, width: wheelSize, height: wheelSize,
-                      transform: `rotate(${angle}deg)`,
-                      transformOrigin: "50% 50%",
-                      clipPath: `polygon(50% 50%, 100% 0, 100% 100%)`,
-                      background: bg,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "flex-start",
-                    }}>
-                      <div style={{
-                        position: "absolute",
-                        left: `${x - wheelSize*0.05}px`,
-                        top: `${y - 12}px`,
-                        transform: `rotate(${-(angle + segment/2)}deg)`,
-                        width: wheelSize*0.4,
-                        textAlign: "center",
-                        fontWeight: 700,
-                        fontSize: 12,
-                        color: "#000"
-                      }}>{label}</div>
+            {/* Wheel Container */}
+            <div className="relative z-20" style={{ width: wheelSize, height: wheelSize }}>
+              {/* The wheel */}
+              <div
+                className="absolute inset-0 rounded-full border-2 border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-sm"
+                style={{
+                  background: wheelGradient,
+                  transform: `rotate(${rotation}deg)`,
+                  transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
+                }}
+              >
+                {/* Labels */}
+                {prizes.map((p, i) => (
+                  <div
+                    key={i}
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center select-none"
+                    style={sectorLabels[i].style}
+                  >
+                    <div
+                      className={`px-2 py-1 rounded-md text-[11px] font-extrabold tracking-wide shadow-sm`}
+                      style={{
+                        background: "rgba(0,0,0,0.35)",
+                        border: "1px solid rgba(255,255,255,0.25)",
+                        color: "#fff",
+                        minWidth: 58,
+                      }}
+                    >
+                      {p.label}
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
 
-              {/* center */}
-              <div style={{ position:"absolute", left: "50%", top:"50%", transform:"translate(-50%,-50%)" }}>
-                <div style={{ width: wheelSize*0.28, height: wheelSize*0.28, borderRadius: "50%", background: "linear-gradient(90deg,#FBBF24,#FB923C)", display: "flex", alignItems:"center", justifyContent:"center", boxShadow: "0 10px 25px rgba(0,0,0,0.25)" }}>
-                  <Sparkles className="text-white" />
+              {/* Center circle */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-1/3 h-1/3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 border-2 border-white/30 shadow-lg flex items-center justify-center">
+                  <Sparkles className="w-1/2 h-1/2 text-white" />
                 </div>
               </div>
             </div>
 
+            {/* Pointer */}
             <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[16px] border-transparent border-b-yellow-300 drop-shadow-lg z-10" />
 
-            <Button onClick={spin} disabled={spinning} className="w-full max-w-xs py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500">
-              {spinning ? "Spinning..." : "SPIN NOW"}
-            </Button>
+            {/* Spin & Sound */}
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={spin}
+                disabled={spinning}
+                className="w-48 py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 border-0 text-white font-bold tracking-wide mt-2"
+              >
+                {spinning ? "Spinning..." : "SPIN NOW"}
+              </Button>
 
+              <button
+                onClick={() => setMuted((m) => !m)}
+                className="mt-2 p-2 rounded-lg bg-white/10 border border-white/15 hover:bg-white/15"
+                aria-label={muted ? "Unmute" : "Mute"}
+              >
+                {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {/* Free spins indicator */}
+            {!userLoggedIn && (
+              <div className="mt-1 text-xs opacity-90">
+                Free spins left: <span className="font-bold">{freeSpins}</span>
+              </div>
+            )}
+
+            {/* Result */}
             {result && (
-              <div className="mt-2 p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
-                <div className="text-sm font-semibold text-center text-white">
-                  {result === "Try Again" ? "Try again! 🎯" : `🎉 ${result}`}
-                </div>
+              <div
+                className={`mt-2 p-2 rounded-lg shadow-md ${
+                  result.startsWith("🎉") ? "bg-gradient-to-r from-green-500 to-emerald-600" : "bg-white/10"
+                }`}
+              >
+                <div className="text-sm font-semibold text-center text-white">{result}</div>
               </div>
             )}
           </div>
 
+          {/* Feature Buttons */}
           <div className="grid grid-cols-3 gap-2 mt-3">
-            {[ { to: "/buy", labels: ["MVZx","Buy & Earn"], bg: "#16a34a", icon: Coins },
+            {[
+              { to: "/buy", labels: ["MVZx", "Buy & Earn"], bg: "#16a34a", icon: Coins },
               { to: "/airdrop", labels: ["Airdrop"], bg: "#db2777", icon: Gift },
               { to: "/mining", labels: ["Mining"], bg: "#ca8a04", icon: Cpu },
-              { to: "/directbuy", labels: ["Direct","Deposit"], bg: "#2563eb", icon: Building },
-              { to: "/escrow", labels: ["Escrow","P2P Trade"], bg: "#4338ca", icon: Handshake },
-              { to: "/voting", labels: ["Voting"], bg: "#15803d", icon: Vote } ].map((b,i)=>(
+              { to: "/directbuy", labels: ["Direct", "Deposit"], bg: "#2563eb", icon: Building },
+              { to: "/escrow", labels: ["Escrow", "P2P Trade"], bg: "#4338ca", icon: Handshake },
+              { to: "/voting", labels: ["Voting"], bg: "#15803d", icon: Vote },
+            ].map((b, i) => (
               <Link key={i} to={b.to}>
-                <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight" style={{ backgroundColor: b.bg }}>
+                <Button
+                  className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold leading-tight border border-white/15 hover:brightness-110"
+                  style={{ backgroundColor: b.bg }}
+                >
                   <b.icon className="w-4 h-4 mb-1" />
-                  {b.labels.map((l,j)=>(<span key={j}>{l}</span>))}
+                  {b.labels.map((l, j) => (
+                    <span key={j}>{l}</span>
+                  ))}
                 </Button>
               </Link>
             ))}
           </div>
 
+          {/* Mining panel */}
           <Card className="mt-4 p-3 bg-white/5 border-white/10">
             <div className="flex justify-center items-center gap-3">
-              <Button onClick={()=>setMiningActive(!miningActive)} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-[12px] ${miningActive ? "bg-green-600" : "bg-orange-500"}`}>
+              <Button
+                onClick={toggleMining}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-semibold text-[12px] ${
+                  miningActive ? "bg-green-600 hover:bg-green-700" : "bg-orange-500 hover:bg-orange-600"
+                }`}
+              >
                 {miningActive ? "Stop Mining" : "Start Mining"}
               </Button>
-              <span className="font-mono text-xs">{(minedAmount/1000).toFixed(2)}s</span>
+              <span className="font-mono text-xs">{minedMs.toLocaleString()} ms</span>
             </div>
-            {miningActive && <div className="mt-2 w-full bg-gray-700 rounded-full h-2"><div className="bg-green-500 h-2 rounded-full" style={{ width: `${(minedAmount/180000)*100}%` }} /></div>}
+            <div className="mt-2 w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-green-500 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${Math.min(100, (minedMs / 180000) * 100)}%` }}
+              />
+            </div>
           </Card>
         </Card>
       </main>
 
-      <footer className="px-4 py-3 text-[11px] text-white/70 text-center">&copy; {new Date().getFullYear()} MAVIZ. All rights reserved.</footer>
+      {/* Footer */}
+      <footer className="px-4 py-3 text-[11px] text-white/70 text-center">
+        &copy; {new Date().getFullYear()} MAVIZ. All rights reserved.
+      </footer>
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={()=>setIsAuthModalOpen(false)} onSuccess={()=>{
-        setUserLoggedIn(true); setDemoWarning(false); loadUserData();
-      }} />
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setUserLoggedIn(true);
+          setDemoWarning(false);
+          loadUserData();
+          // Pull auth (if your modal sets token)
+          try {
+            loadAuth();
+          } catch {}
+        }}
+      />
+
+      {/* Win sound (short sfx, add your own file in /public/sounds/win.mp3) */}
+      <audio ref={audioRef} src="/sounds/win.mp3" preload="auto" />
     </div>
   );
 }
