@@ -164,15 +164,15 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen w-full text-white flex flex-col" style={{ background: "linear-gradient(135deg, #3a0006 0%, #1a0020 50%, #000524 100%)" }}>
-      {/* Header */}
-      <header className="sticky top-0 z-30 bg-[#3a0006]/95 backdrop-blur-sm border-b border-white/10">
+      {/* Header - Changed to UBA red as requested */}
+      <header className="sticky top-0 z-30 bg-[#E41B23] border-b border-white/10">
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex items-center gap-2">
             <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-white/30" />
           </div>
           <div className="text-center leading-tight">
-            <h1 className="text-[15px] font-extrabold tracking-wide">MAVIZ SWAPS</h1>
-            <p className="text-[12px] opacity-95">Token Swap & Earn</p>
+            <h1 className="text-[15px] font-extrabold tracking-wide text-white">MAVIZ SWAPS</h1>
+            <p className="text-[12px] text-white/95">Token Swap & Earn</p>
           </div>
           <div className="flex items-center gap-3">
             <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-white/20 hover:bg-white/30 border border-white/20">
@@ -185,7 +185,7 @@ export default function LandingPage() {
           </div>
         </div>
         <div className="px-4 pb-2 pt-1">
-          <p className="text-[12px] opacity-95">
+          <p className="text-[12px] text-white/95">
              MAVIZ – P2P Escrow Swap, Games, Airdrop, Mining, Unlock Affiliate Rewards in USDT, Spin & Earn, Voting & more
           </p>
           {demoWarning && <p className="text-[12px] text-yellow-300 font-semibold mt-1">⚠️ This is a demo until signup</p>}
@@ -222,13 +222,30 @@ export default function LandingPage() {
             <div className="relative" style={{ width: wheelSize, height: wheelSize }}>
               <div
                 ref={wheelRef}
-                className="absolute inset-0 rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)]"
+                className="absolute inset-0 rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)] overflow-hidden"
                 style={{
                   transform: `rotate(${rotation}deg)`,
                   transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
-                  background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.35), rgba(255,255,255,0.05) 55%, transparent 60%)",
+                  background: "conic-gradient(from 0deg, #FACC15 0deg 60deg, #3B82F6 60deg 120deg, #10B981 120deg 180deg, #EF4444 180deg 240deg, #8B5CF6 240deg 300deg, #06B6D4 300deg 360deg)",
                 }}
               >
+                {/* Sector divider lines */}
+                {prizes.map((_, i) => {
+                  const angle = (360 / prizes.length) * i;
+                  return (
+                    <div
+                      key={i}
+                      className="absolute left-1/2 top-1/2 origin-0 w-1/2 h-1/2"
+                      style={{ transform: `rotate(${angle}deg)` }}
+                    >
+                      <div className="absolute w-full h-full">
+                        <div className="absolute left-0 top-0 w-full h-px bg-white/30 origin-center rotate-45 transform"></div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Prize stickers */}
                 {prizes.map((label, i) => {
                   const segmentAngle = 360 / prizes.length;
                   const angle = i * segmentAngle;
@@ -241,22 +258,17 @@ export default function LandingPage() {
                       style={{ transform: `rotate(${angle}deg)` }}
                     >
                       <div
-                        className="absolute w-full h-full flex items-center justify-center"
-                        style={{
-                          transform: `rotate(${segmentAngle / 2}deg)`,
-                          backgroundColor: colors[i % colors.length],
-                          clipPath: "polygon(0 0, 100% 0, 100% 100%)",
-                        }}
+                        className="absolute top-8 left-8 transform -translate-x-1/2 -translate-y-1/2"
+                        style={{ transform: `rotate(${segmentAngle / 2}deg)` }}
                       >
-                        <span 
-                          className="text-xs font-bold text-black absolute top-1/2 right-1/4"
-                          style={{ 
-                            transform: "rotate(-90deg) translateX(-50%)",
-                            transformOrigin: "center"
-                          }}
+                        <div
+                          className="w-16 h-8 flex items-center justify-center rounded-lg shadow-lg border-2 border-white/20"
+                          style={{ backgroundColor: colors[i % colors.length] }}
                         >
-                          {label}
-                        </span>
+                          <span className="text-xs font-bold text-black px-1 text-center">
+                            {label}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   );
@@ -272,24 +284,31 @@ export default function LandingPage() {
             </div>
 
             {/* Pointer */}
-            <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[18px] border-transparent border-b-yellow-300 drop-shadow" />
+            <div className="mt-2 mb-2 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-transparent border-b-yellow-400 drop-shadow-lg z-10" />
             
             {/* Spin Button */}
             <Button 
               onClick={spin} 
               disabled={spinning} 
-              className="w-full max-w-xs py-2 rounded-xl bg-white/20 hover:bg-white/30 border border-white/25 text-white font-bold tracking-wide"
+              className="w-full max-w-xs py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-0 text-white font-bold tracking-wide text-lg"
             >
-              {spinning ? "Spinning..." : "SPIN NOW"}
+              {spinning ? (
+                <div className="flex items-center justify-center">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  Spinning...
+                </div>
+              ) : (
+                "SPIN NOW"
+              )}
             </Button>
             
             {/* Result Display */}
             {result && (
-              <Card className="mt-2 p-2 bg-green-500/20 border-green-500/30">
-                <div className="text-sm font-semibold text-center">
-                  {result === "Try Again" ? "No luck—try again!" : `🎉 You won: ${result}`}
+              <div className="mt-4 p-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg">
+                <div className="text-lg font-bold text-center text-white">
+                  {result === "Try Again" ? "No luck—try again! 🎯" : `🎉 You won: ${result}`}
                 </div>
-              </Card>
+              </div>
             )}
           </div>
 
