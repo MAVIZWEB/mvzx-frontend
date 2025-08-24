@@ -53,8 +53,8 @@ async function jfetch(path: string, init: RequestInit = {}) {
 }
 
 export const api = {
-  // Auth
-  register: (email: string, wallet: string) => 
+  // Auth - FIXED: Changed from 'register' to 'signup' to match your backend
+  signup: (email: string, wallet: string) => 
     jfetch("/auth/register", { method: "POST", body: JSON.stringify({ email, wallet }) }),
   
   login: (email: string, wallet: string) => 
@@ -63,7 +63,6 @@ export const api = {
   // User data
   getWallet: () => jfetch("/wallet/me"),
   getMatrixStatus: () => jfetch("/matrix/status/me"),
-  getMatrixTree: () => jfetch("/matrix/tree"),
 
   // Payments
   getQuote: (amount: number, currency: "USDT" | "NGN") => 
