@@ -12,7 +12,6 @@ import Dashboard from "./pages/Dashboard";
 import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
 import AdminPanel from "./pages/AdminPanel";
-import MatrixTree from "./pages/MatrixTree";
 
 function App() {
   return (
@@ -29,7 +28,6 @@ function App() {
       <Route path="/game" element={<Game />} />
       <Route path="/leaderboard" element={<Leaderboard />} />
       <Route path="/admin" element={<AdminPanel />} />
-      <Route path="/matrix-tree" element={<MatrixTree />} />
     </Routes>
   );
 }
