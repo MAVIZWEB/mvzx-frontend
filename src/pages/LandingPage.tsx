@@ -134,7 +134,8 @@ export default function LandingPage() {
     } catch {}
 
     const segment = 360 / prizes.length;
-    const stopAt = rotation + 360 * 4 + (prizeIndex * segment + segment / 2);
+    // Calculate precise stop position to align pointer with the selected prize
+    const stopAt = rotation + 360 * 5 + (prizeIndex * segment);
     setRotation(stopAt);
 
     window.setTimeout(() => {
@@ -145,7 +146,7 @@ export default function LandingPage() {
         playWinChime();
         setWins((w) => w + 1);
       }
-    }, 4200);
+    }, 5200);
   };
 
   const vh = Math.max(600, window.innerHeight);
@@ -164,7 +165,7 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen w-full text-white flex flex-col" style={{ background: "linear-gradient(135deg, #3a0006 0%, #1a0020 50%, #000524 100%)" }}>
-      {/* Header - Bright yellow as requested */}
+      {/* Header - Fixed button colors */}
       <header className="sticky top-0 z-30 bg-[#FFD700] border-b border-yellow-300">
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex items-center gap-2">
@@ -175,12 +176,14 @@ export default function LandingPage() {
             <p className="text-[12px] text-gray-800">Token Swap & Earn</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-white/90 hover:bg-white border border-yellow-400 text-gray-900">
+            {/* Fixed: Purple button with white text */}
+            <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600 text-white">
               <User className="w-3.5 h-3.5 mr-1" />
               Sign Up
             </Button>
-            <Button onClick={() => navigate("/dashboard")} className="px-2.5 py-1 rounded-full bg-white/80 hover:bg-white border border-yellow-400 text-gray-900">
-              <Menu className="w-4 h-4" />
+            {/* Fixed: Purple button with white icon */}
+            <Button onClick={() => navigate("/dashboard")} className="px-2.5 py-1 rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600">
+              <Menu className="w-4 h-4 text-white" />
             </Button>
           </div>
         </div>
@@ -213,25 +216,25 @@ export default function LandingPage() {
             </div>
           </Card>
 
-          {/* Wheel + Leaderboard */}
+          {/* Wheel + Leaderboard - Fixed z-index to put wheel above leaderboard */}
           <div className="relative flex flex-col items-center mb-3">
             <div className="absolute inset-x-3 -top-2 z-10">
               <LeaderboardGlass />
             </div>
             <div className="h-16" />
             
-            {/* Wheel Container - Transparent with precise sticker placement */}
-            <div className="relative z-0" style={{ width: wheelSize, height: wheelSize }}>
+            {/* Wheel Container - Higher z-index to be above leaderboard */}
+            <div className="relative z-20" style={{ width: wheelSize, height: wheelSize }}>
               <div
                 ref={wheelRef}
                 className="absolute inset-0 rounded-full border-2 border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-sm"
                 style={{
                   transform: `rotate(${rotation}deg)`,
-                  transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
+                  transition: spinning ? "transform 5.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
                   background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 0%, transparent 70%)",
                 }}
               >
-                {/* Precise sector divider lines */}
+                {/* Fixed: Centered sector divider lines */}
                 {prizes.map((_, i) => {
                   const angle = (360 / prizes.length) * i;
                   return (
@@ -240,9 +243,9 @@ export default function LandingPage() {
                       className="absolute left-1/2 top-1/2 origin-0 w-1/2 h-1/2"
                       style={{ transform: `rotate(${angle}deg)` }}
                     >
-                      <div className="absolute w-full h-full">
+                      <div className="absolute w-full h-full flex items-center justify-center">
                         <div 
-                          className="absolute left-0 top-0 w-full h-px bg-white/30 origin-center rotate-45 transform"
+                          className="w-px h-full bg-white/30 transform rotate-45"
                           style={{ filter: "blur(0.5px)" }}
                         ></div>
                       </div>
@@ -254,8 +257,8 @@ export default function LandingPage() {
                 {prizes.map((label, i) => {
                   const segmentAngle = 360 / prizes.length;
                   const angle = i * segmentAngle;
-                  const radius = wheelSize * 0.35; // Distance from center
-                  const stickerAngle = angle + segmentAngle / 2; // Middle of sector
+                  const radius = wheelSize * 0.35;
+                  const stickerAngle = angle + segmentAngle / 2;
                   
                   // Calculate position using trigonometry
                   const x = radius * Math.cos((stickerAngle * Math.PI) / 180);
@@ -295,13 +298,13 @@ export default function LandingPage() {
             </div>
 
             {/* Pointer */}
-            <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[16px] border-transparent border-b-yellow-300 drop-shadow-lg z-10" />
+            <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[16px] border-transparent border-b-yellow-300 drop-shadow-lg z-30" />
             
             {/* Spin Button */}
             <Button 
               onClick={spin} 
               disabled={spinning} 
-              className="w-full max-w-xs py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 border-0 text-white font-bold tracking-wide mt-2"
+              className="w-full max-w-xs py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 border-0 text-white font-bold tracking-wide mt-2 z-10"
             >
               {spinning ? (
                 <div className="flex items-center justify-center">
@@ -315,7 +318,7 @@ export default function LandingPage() {
             
             {/* Smaller Result Display */}
             {result && (
-              <div className="mt-2 p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
+              <div className="mt-2 p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md z-10">
                 <div className="text-sm font-semibold text-center text-white">
                   {result === "Try Again" ? "Try again! 🎯" : `🎉 ${result}`}
                 </div>
@@ -323,7 +326,7 @@ export default function LandingPage() {
             )}
           </div>
 
-          {/* Feature Buttons - Now visible at all times */}
+          {/* Feature Buttons */}
           <div className="grid grid-cols-3 gap-2 mt-3">
             {[
               { to: "/buy", labels: ["MVZx", "Buy & Earn"], bg: "#16a34a" },
