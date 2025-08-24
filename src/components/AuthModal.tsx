@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { X, Mail, Lock, UserPlus, LogIn, Wallet as WalletIcon } from "lucide-react";
 import { api, setAuth } from "../services/api";
-import { generateRealWallet, encryptPrivateKey } from "../services/walletService";
+import { generateRealWallet } from "../services/walletService";
 import Button from "./UI/Button";
 import Card from "./UI/Card";
 
@@ -66,7 +66,8 @@ export default function AuthModal({ isOpen, onClose, onSuccess }: AuthModalProps
         }
 
         const walletAddress = formData.wallet || generateRealWallet().address;
-        const res = await api.register(formData.email, walletAddress);
+        // FIXED: Changed from api.register to api.signup
+        const res = await api.signup(formData.email, walletAddress);
         
         if (res?.token && res?.user) {
           setAuth(res.token);
