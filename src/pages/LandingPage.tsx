@@ -1,4 +1,4 @@
-// src/pages/LandingPage.tsx
+ // src/pages/LandingPage.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, User, Wallet, Trophy, Crown, Sparkles } from "lucide-react";
@@ -164,31 +164,31 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen w-full text-white flex flex-col" style={{ background: "linear-gradient(135deg, #3a0006 0%, #1a0020 50%, #000524 100%)" }}>
-      {/* Header - Changed to yellow glassy as requested */}
-      <header className="sticky top-0 z-30 bg-yellow-500/30 backdrop-blur-md border-b border-yellow-400/30">
+      {/* Header - Bright yellow as requested */}
+      <header className="sticky top-0 z-30 bg-[#FFD700] border-b border-yellow-300">
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex items-center gap-2">
-            <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-yellow-400/30" />
+            <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-yellow-400/50" />
           </div>
           <div className="text-center leading-tight">
-            <h1 className="text-[15px] font-extrabold tracking-wide text-white">MAVIZ SWAPS</h1>
-            <p className="text-[12px] text-white/95">Token Swap & Earn</p>
+            <h1 className="text-[15px] font-extrabold tracking-wide text-gray-900">MAVIZ SWAPS</h1>
+            <p className="text-[12px] text-gray-800">Token Swap & Earn</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/30">
+            <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-white/90 hover:bg-white border border-yellow-400 text-gray-900">
               <User className="w-3.5 h-3.5 mr-1" />
               Sign Up
             </Button>
-            <Button onClick={() => navigate("/dashboard")} className="px-2.5 py-1 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-400/20">
+            <Button onClick={() => navigate("/dashboard")} className="px-2.5 py-1 rounded-full bg-white/80 hover:bg-white border border-yellow-400 text-gray-900">
               <Menu className="w-4 h-4" />
             </Button>
           </div>
         </div>
         <div className="px-4 pb-2 pt-1">
-          <p className="text-[12px] text-white/95">
+          <p className="text-[12px] text-gray-800">
              MAVIZ – P2P Escrow Swap, Games, Airdrop, Mining, Unlock Affiliate Rewards in USDT, Spin & Earn, Voting & more
           </p>
-          {demoWarning && <p className="text-[12px] text-yellow-200 font-semibold mt-1">⚠️ This is a demo until signup</p>}
+          {demoWarning && <p className="text-[12px] text-orange-800 font-semibold mt-1">⚠️ This is a demo until signup</p>}
         </div>
       </header>
 
@@ -220,7 +220,7 @@ export default function LandingPage() {
             </div>
             <div className="h-16" />
             
-            {/* Wheel Container - Transparent with glassy effect */}
+            {/* Wheel Container - Transparent with precise sticker placement */}
             <div className="relative z-0" style={{ width: wheelSize, height: wheelSize }}>
               <div
                 ref={wheelRef}
@@ -231,7 +231,7 @@ export default function LandingPage() {
                   background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 0%, transparent 70%)",
                 }}
               >
-                {/* Soft glassy divider lines */}
+                {/* Precise sector divider lines */}
                 {prizes.map((_, i) => {
                   const angle = (360 / prizes.length) * i;
                   return (
@@ -242,7 +242,7 @@ export default function LandingPage() {
                     >
                       <div className="absolute w-full h-full">
                         <div 
-                          className="absolute left-0 top-0 w-full h-px bg-white/20 origin-center rotate-45 transform"
+                          className="absolute left-0 top-0 w-full h-px bg-white/30 origin-center rotate-45 transform"
                           style={{ filter: "blur(0.5px)" }}
                         ></div>
                       </div>
@@ -250,30 +250,36 @@ export default function LandingPage() {
                   );
                 })}
 
-                {/* Colored prize stickers in middle of sectors */}
+                {/* Precisely positioned colored prize stickers */}
                 {prizes.map((label, i) => {
                   const segmentAngle = 360 / prizes.length;
                   const angle = i * segmentAngle;
+                  const radius = wheelSize * 0.35; // Distance from center
+                  const stickerAngle = angle + segmentAngle / 2; // Middle of sector
+                  
+                  // Calculate position using trigonometry
+                  const x = radius * Math.cos((stickerAngle * Math.PI) / 180);
+                  const y = radius * Math.sin((stickerAngle * Math.PI) / 180);
+                  
                   const colors = ["#FACC15", "#3B82F6", "#10B981", "#EF4444", "#8B5CF6", "#06B6D4"];
                   
                   return (
                     <div
                       key={i}
-                      className="absolute left-1/2 top-1/2 origin-0 w-1/2 h-1/2"
-                      style={{ transform: `rotate(${angle}deg)` }}
+                      className="absolute"
+                      style={{
+                        left: `calc(50% + ${x}px)`,
+                        top: `calc(50% + ${y}px)`,
+                        transform: `translate(-50%, -50%) rotate(${stickerAngle}deg)`,
+                      }}
                     >
                       <div
-                        className="absolute top-16 left-16 transform -translate-x-1/2 -translate-y-1/2"
-                        style={{ transform: `rotate(${segmentAngle / 2}deg)` }}
+                        className="w-14 h-8 flex items-center justify-center rounded-lg border-2 border-white/30 shadow-lg backdrop-blur-sm transform -rotate-45"
+                        style={{ backgroundColor: `${colors[i % colors.length]}CC` }}
                       >
-                        <div
-                          className="w-14 h-8 flex items-center justify-center rounded-lg border-2 border-white/30 shadow-lg backdrop-blur-sm"
-                          style={{ backgroundColor: `${colors[i % colors.length]}CC` }}
-                        >
-                          <span className="text-xs font-bold text-white px-1 text-center">
-                            {label}
-                          </span>
-                        </div>
+                        <span className="text-xs font-bold text-white px-1 text-center">
+                          {label}
+                        </span>
                       </div>
                     </div>
                   );
