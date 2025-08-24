@@ -40,7 +40,16 @@ async function jfetch(path: string, init: RequestInit = {}) {
     }
     
     if (!res.ok) {
-      const errorText = await res.text().catch(() => res.statusText);
+      // Try to get error message from response
+      let errorText = res.statusText;
+      try {
+        const errorData = await res.json();
+        errorText = errorData.message || errorData.error || JSON.stringify(errorData);
+      } catch {
+        try {
+          errorText = await res.text();
+        } catch {}
+      }
       throw new Error(errorText || `Request failed with status ${res.status}`);
     }
     
@@ -48,17 +57,26 @@ async function jfetch(path: string, init: RequestInit = {}) {
     return contentType.includes("application/json") ? res.json() : res.text();
   } catch (error) {
     console.error("API request failed:", error);
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error("Network error. Please check your connection.");
   }
 }
 
 export const api = {
-  // Auth - FIXED: Changed from 'register' to 'signup' to match your backend
+  // Auth
   signup: (email: string, wallet: string) => 
-    jfetch("/auth/register", { method: "POST", body: JSON.stringify({ email, wallet }) }),
+    jfetch("/auth/register", { 
+      method: "POST", 
+      body: JSON.stringify({ email, wallet }) 
+    }),
   
   login: (email: string, wallet: string) => 
-    jfetch("/auth/login", { method: "POST", body: JSON.stringify({ email, wallet }) }),
+    jfetch("/auth/login", { 
+      method: "POST", 
+      body: JSON.stringify({ email, wallet }) 
+    }),
 
   // User data
   getWallet: () => jfetch("/wallet/me"),
@@ -66,13 +84,22 @@ export const api = {
 
   // Payments
   getQuote: (amount: number, currency: "USDT" | "NGN") => 
-    jfetch("/payments/quote", { method: "POST", body: JSON.stringify({ amount, currency }) }),
+    jfetch("/payments/quote", { 
+      method: "POST", 
+      body: JSON.stringify({ amount, currency }) 
+    }),
   
   createOrder: (method: string, amount: number, currency: string) => 
-    jfetch("/payments/create", { method: "POST", body: JSON.stringify({ method, amount, currency }) }),
+    jfetch("/payments/create", { 
+      method: "POST", 
+      body: JSON.stringify({ method, amount, currency }) 
+    }),
 
   submitManualDeposit: (data: any) => 
-    jfetch("/payments/manual/submit", { method: "POST", body: JSON.stringify(data) }),
+    jfetch("/payments/manual/submit", { 
+      method: "POST", 
+      body: JSON.stringify(data) 
+    }),
 
   // Game
   spin: () => jfetch("/game/spin", { method: "POST" }),
@@ -81,5 +108,8 @@ export const api = {
   // Admin
   getDepositRequests: () => jfetch("/admin/deposits"),
   processDeposit: (id: string, action: "approve" | "reject") => 
-    jfetch(`/admin/deposits/${id}`, { method: "POST", body: JSON.stringify({ action }) }),
+    jfetch(`/admin/deposits/${id}`, { 
+      method: "POST", 
+      body: JSON.stringify({ action }) 
+    }),
 };
