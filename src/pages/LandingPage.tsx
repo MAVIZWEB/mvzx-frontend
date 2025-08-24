@@ -1,6 +1,6 @@
  import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, User, Wallet, Trophy, Crown, Sparkles, Coins, Gift, Cpu, Handshake, Vote, Bank } from "lucide-react";
+import { Menu, User, Wallet, Trophy, Crown, Sparkles, Coins, Gift, Cpu, Handshake, Vote, Building } from "lucide-react";
 import { api, loadAuth, isAuthenticated } from "../services/api";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
@@ -249,7 +249,7 @@ export default function LandingPage() {
               { to: "/buy", labels: ["MVZx", "Buy & Earn"], bg: "#16a34a", icon: Coins },
               { to: "/airdrop", labels: ["Airdrop"], bg: "#db2777", icon: Gift },
               { to: "/mining", labels: ["Mining"], bg: "#ca8a04", icon: Cpu },
-              { to: "/directbuy", labels: ["Direct", "Deposit"], bg: "#2563eb", icon: Bank },
+              { to: "/directbuy", labels: ["Direct", "Deposit"], bg: "#2563eb", icon: Building },
               { to: "/escrow", labels: ["Escrow", "P2P Trade"], bg: "#4338ca", icon: Handshake },
               { to: "/voting", labels: ["Voting"], bg: "#15803d", icon: Vote },
             ].map((b, i) => (
