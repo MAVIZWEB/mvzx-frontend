@@ -1,4 +1,4 @@
- // src/pages/LandingPage.tsx
+// src/pages/LandingPage.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, User, Wallet, Trophy, Crown, Sparkles } from "lucide-react";
@@ -164,22 +164,22 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen w-full text-white flex flex-col" style={{ background: "linear-gradient(135deg, #3a0006 0%, #1a0020 50%, #000524 100%)" }}>
-      {/* Header - Changed to UBA red as requested */}
-      <header className="sticky top-0 z-30 bg-[#E41B23] border-b border-white/10">
+      {/* Header - Changed to yellow glassy as requested */}
+      <header className="sticky top-0 z-30 bg-yellow-500/30 backdrop-blur-md border-b border-yellow-400/30">
         <div className="flex items-center justify-between px-4 pt-3">
           <div className="flex items-center gap-2">
-            <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-white/30" />
+            <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-yellow-400/30" />
           </div>
           <div className="text-center leading-tight">
             <h1 className="text-[15px] font-extrabold tracking-wide text-white">MAVIZ SWAPS</h1>
             <p className="text-[12px] text-white/95">Token Swap & Earn</p>
           </div>
           <div className="flex items-center gap-3">
-            <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-white/20 hover:bg-white/30 border border-white/20">
+            <Button onClick={() => navigate("/signup")} className="px-3 py-1 text-xs rounded-full bg-yellow-500/20 hover:bg-yellow-500/30 border border-yellow-400/30">
               <User className="w-3.5 h-3.5 mr-1" />
               Sign Up
             </Button>
-            <Button onClick={() => navigate("/dashboard")} className="px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/10">
+            <Button onClick={() => navigate("/dashboard")} className="px-2.5 py-1 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-400/20">
               <Menu className="w-4 h-4" />
             </Button>
           </div>
@@ -188,14 +188,14 @@ export default function LandingPage() {
           <p className="text-[12px] text-white/95">
              MAVIZ – P2P Escrow Swap, Games, Airdrop, Mining, Unlock Affiliate Rewards in USDT, Spin & Earn, Voting & more
           </p>
-          {demoWarning && <p className="text-[12px] text-yellow-300 font-semibold mt-1">⚠️ This is a demo until signup</p>}
+          {demoWarning && <p className="text-[12px] text-yellow-200 font-semibold mt-1">⚠️ This is a demo until signup</p>}
         </div>
       </header>
 
       {/* Main */}
       <main className="flex-1 px-3 pb-3 overflow-auto">
         {/* Wheel Card */}
-        <Card className="relative rounded-2xl bg-white/10 border border-white/15 backdrop-blur-xl shadow-2xl p-3 mt-3">
+        <Card className="relative rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl p-3 mt-3">
           <div className="text-center mb-2">
             <h2 className="text-sm font-extrabold tracking-wide">INSTANT SPIN & EARN</h2>
           </div>
@@ -215,21 +215,23 @@ export default function LandingPage() {
 
           {/* Wheel + Leaderboard */}
           <div className="relative flex flex-col items-center mb-3">
-            <div className="absolute inset-x-3 -top-2"><LeaderboardGlass /></div>
+            <div className="absolute inset-x-3 -top-2 z-10">
+              <LeaderboardGlass />
+            </div>
             <div className="h-16" />
             
-            {/* Wheel Container */}
-            <div className="relative" style={{ width: wheelSize, height: wheelSize }}>
+            {/* Wheel Container - Transparent with glassy effect */}
+            <div className="relative z-0" style={{ width: wheelSize, height: wheelSize }}>
               <div
                 ref={wheelRef}
-                className="absolute inset-0 rounded-full border-4 border-white/30 shadow-[0_0_40px_rgba(255,255,255,0.15)] overflow-hidden"
+                className="absolute inset-0 rounded-full border-2 border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.1)] backdrop-blur-sm"
                 style={{
                   transform: `rotate(${rotation}deg)`,
                   transition: spinning ? "transform 4.2s cubic-bezier(0.33, 1, 0.68, 1)" : "none",
-                  background: "conic-gradient(from 0deg, #FACC15 0deg 60deg, #3B82F6 60deg 120deg, #10B981 120deg 180deg, #EF4444 180deg 240deg, #8B5CF6 240deg 300deg, #06B6D4 300deg 360deg)",
+                  background: "radial-gradient(circle at 50% 50%, rgba(255,255,255,0.15) 0%, transparent 70%)",
                 }}
               >
-                {/* Sector divider lines */}
+                {/* Soft glassy divider lines */}
                 {prizes.map((_, i) => {
                   const angle = (360 / prizes.length) * i;
                   return (
@@ -239,13 +241,16 @@ export default function LandingPage() {
                       style={{ transform: `rotate(${angle}deg)` }}
                     >
                       <div className="absolute w-full h-full">
-                        <div className="absolute left-0 top-0 w-full h-px bg-white/30 origin-center rotate-45 transform"></div>
+                        <div 
+                          className="absolute left-0 top-0 w-full h-px bg-white/20 origin-center rotate-45 transform"
+                          style={{ filter: "blur(0.5px)" }}
+                        ></div>
                       </div>
                     </div>
                   );
                 })}
 
-                {/* Prize stickers */}
+                {/* Colored prize stickers in middle of sectors */}
                 {prizes.map((label, i) => {
                   const segmentAngle = 360 / prizes.length;
                   const angle = i * segmentAngle;
@@ -258,14 +263,14 @@ export default function LandingPage() {
                       style={{ transform: `rotate(${angle}deg)` }}
                     >
                       <div
-                        className="absolute top-8 left-8 transform -translate-x-1/2 -translate-y-1/2"
+                        className="absolute top-16 left-16 transform -translate-x-1/2 -translate-y-1/2"
                         style={{ transform: `rotate(${segmentAngle / 2}deg)` }}
                       >
                         <div
-                          className="w-16 h-8 flex items-center justify-center rounded-lg shadow-lg border-2 border-white/20"
-                          style={{ backgroundColor: colors[i % colors.length] }}
+                          className="w-14 h-8 flex items-center justify-center rounded-lg border-2 border-white/30 shadow-lg backdrop-blur-sm"
+                          style={{ backgroundColor: `${colors[i % colors.length]}CC` }}
                         >
-                          <span className="text-xs font-bold text-black px-1 text-center">
+                          <span className="text-xs font-bold text-white px-1 text-center">
                             {label}
                           </span>
                         </div>
@@ -275,22 +280,22 @@ export default function LandingPage() {
                 })}
               </div>
               
-              {/* Center circle */}
+              {/* Colored center circle only */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-1/4 h-1/4 rounded-full bg-white/20 border border-white/30 flex items-center justify-center">
-                  <Sparkles className="w-1/2 h-1/2 text-yellow-300" />
+                <div className="w-1/3 h-1/3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-400 border-2 border-white/30 shadow-lg flex items-center justify-center">
+                  <Sparkles className="w-1/2 h-1/2 text-white" />
                 </div>
               </div>
             </div>
 
             {/* Pointer */}
-            <div className="mt-2 mb-2 w-0 h-0 border-l-[12px] border-r-[12px] border-b-[20px] border-transparent border-b-yellow-400 drop-shadow-lg z-10" />
+            <div className="mt-2 mb-2 w-0 h-0 border-l-[10px] border-r-[10px] border-b-[16px] border-transparent border-b-yellow-300 drop-shadow-lg z-10" />
             
             {/* Spin Button */}
             <Button 
               onClick={spin} 
               disabled={spinning} 
-              className="w-full max-w-xs py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 border-0 text-white font-bold tracking-wide text-lg"
+              className="w-full max-w-xs py-2 rounded-xl bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 border-0 text-white font-bold tracking-wide mt-2"
             >
               {spinning ? (
                 <div className="flex items-center justify-center">
@@ -302,17 +307,17 @@ export default function LandingPage() {
               )}
             </Button>
             
-            {/* Result Display */}
+            {/* Smaller Result Display */}
             {result && (
-              <div className="mt-4 p-4 bg-gradient-to-r from-green-500 to-emerald-600 rounded-xl shadow-lg">
-                <div className="text-lg font-bold text-center text-white">
-                  {result === "Try Again" ? "No luck—try again! 🎯" : `🎉 You won: ${result}`}
+              <div className="mt-2 p-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-lg shadow-md">
+                <div className="text-sm font-semibold text-center text-white">
+                  {result === "Try Again" ? "Try again! 🎯" : `🎉 ${result}`}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Feature Buttons */}
+          {/* Feature Buttons - Now visible at all times */}
           <div className="grid grid-cols-3 gap-2 mt-3">
             {[
               { to: "/buy", labels: ["MVZx", "Buy & Earn"], bg: "#16a34a" },
