@@ -9,10 +9,10 @@ import AuthModal from "../components/AuthModal";
 
 function LeaderboardGlass() {
   const [rows, setRows] = useState<{ user: string; prize: string; ts: string }[]>([
-    { user: "Grace", prize: "20 MVZx", ts: "2m ago" },
-    { user: "Ahmed", prize: "10 MVZx", ts: "5m ago" },
-    { user: "Sola", prize: "50 MVZx", ts: "12m ago" },
-    { user: "Ife", prize: "5 MVZx", ts: "18m ago" },
+    { user: "Edu", prize: "20 MVZx", ts: "2m ago" },
+    { user: "Isa", prize: "10 MVZx", ts: "5m ago" },
+    { user: "Ike", prize: "50 MVZx", ts: "12m ago" },
+    { user: "Ayo", prize: "5 MVZx", ts: "18m ago" },
   ]);
 
   useEffect(() => {
