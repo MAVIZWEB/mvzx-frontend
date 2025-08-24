@@ -1,108 +1,95 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import {
-  Menu,
-  User,
-  Wallet,
-  Trophy,
-  Crown,
-  Sparkles,
-  Coins,
-  Gift,
-  Cpu,
-  Handshake,
-  Vote,
-  Building,
-} from "lucide-react";
+import { Menu, User, Wallet, Trophy, Crown, Sparkles } from "lucide-react";
 import { api, loadAuth, isAuthenticated } from "../services/api";
 import Button from "../components/UI/Button";
+import Card from "../components/UI/Card";
+import Badge from "../components/UI/Badge";
+import AuthModal from "../components/AuthModal";
+import LeaderboardGlass from "../components/LeaderboardGlass";
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const [authLoaded, setAuthLoaded] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [userLoggedIn, setUserLoggedIn] = useState(isAuthenticated());
+  const [badge, setBadge] = useState("Bronze");
+  const [wins, setWins] = useState(0);
+  const [wallet, setWallet] = useState(0);
+  const [demoWarning, setDemoWarning] = useState(!userLoggedIn);
 
   useEffect(() => {
-    loadAuth();
-    setAuthLoaded(true);
-  }, []);
-
-  useEffect(() => {
-    if (authLoaded && isAuthenticated()) {
-      navigate("/dashboard");
+    if (userLoggedIn) {
+      loadUserData();
     }
-  }, [authLoaded, navigate]);
+  }, [userLoggedIn]);
 
-  const featureButtons = useMemo(
-    () => [
-      { icon: Wallet, label: "Wallet", path: "/wallet" },
-      { icon: Trophy, label: "Rewards", path: "/rewards" },
-      { icon: Crown, label: "Staking", path: "/staking" },
-      { icon: Sparkles, label: "Trading", path: "/trading" },
-      { icon: Coins, label: "ICO", path: "/ico" },
-      { icon: Gift, label: "Referrals", path: "/referrals" },
-      { icon: Cpu, label: "AI Trading", path: "/aitrading" },
-      { icon: Handshake, label: "Partnership", path: "/partnership" },
-      { icon: Vote, label: "Governance", path: "/governance" },
-      { icon: Building, label: "Direct Deposit", path: "/directbuy" },
-    ],
-    []
-  );
+  const loadUserData = async () => {
+    try {
+      const [walletRes, matrixRes] = await Promise.all([
+        api.getWallet().catch(() => ({ balances: [] })),
+        api.getMatrixStatus().catch(() => null)
+      ]);
 
-  const handleNavigation = (path: string) => {
-    if (!isAuthenticated()) {
-      navigate("/login");
-    } else {
-      navigate(path);
+      const mvzxBalance = walletRes.balances?.find((b: any) => b.token === "MVZx");
+      setWallet(mvzxBalance ? parseFloat(mvzxBalance.amount) : 0);
+
+      if (matrixRes?.badge) setBadge(matrixRes.badge.name);
+    } catch (error) {
+      console.error("Failed to load user data:", error);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-gray-900 to-black text-white px-6">
+    <div className="min-h-screen w-full text-white flex flex-col bg-gradient-to-b from-purple-900 to-red-900">
       {/* Header */}
-      <header className="w-full flex justify-between items-center py-4">
-        <h1 className="text-2xl font-bold text-yellow-400">MVZx Platform</h1>
-        <nav className="flex items-center gap-4">
-          <Button onClick={() => navigate("/login")}>Login</Button>
-          <Button onClick={() => navigate("/signup")} variant="secondary">
-            Sign Up
-          </Button>
-        </nav>
+      <header className="sticky top-0 z-30 bg-[#FFD700] border-b border-yellow-300">
+        <div className="flex items-center justify-between px-4 pt-3">
+          <div className="flex items-center gap-2">
+            <img src="https://i.imgur.com/VbxvCK6.jpeg" alt="MAVIZ" className="h-8 w-8 rounded-full ring-2 ring-yellow-400/50" />
+          </div>
+          <div className="text-center leading-tight">
+            <h1 className="text-[15px] font-extrabold tracking-wide text-gray-900">MAVIZ SWAPS</h1>
+            <p className="text-[12px] text-gray-800">Token Swap & Earn</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={() => userLoggedIn ? navigate("/dashboard") : setIsAuthModalOpen(true)}
+              className="px-3 py-1 text-xs rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600 text-white"
+            >
+              <User className="w-3.5 h-3.5 mr-1" />
+              {userLoggedIn ? "Dashboard" : "Sign Up"}
+            </Button>
+            <Button 
+              onClick={() => userLoggedIn ? navigate("/dashboard") : setIsAuthModalOpen(true)}
+              className="px-2.5 py-1 rounded-full bg-purple-700 hover:bg-purple-800 border border-purple-600"
+            >
+              <Menu className="w-4 h-4 text-white" />
+            </Button>
+          </div>
+        </div>
+        <div className="px-4 pb-2 pt-1">
+          <p className="text-[12px] text-gray-800">
+            MAVIZ – P2P Escrow Swap, Games, Airdrop, Mining, Unlock Affiliate Rewards in USDT, Spin & Earn, Voting & more
+          </p>
+          {demoWarning && <p className="text-[12px] text-orange-800 font-semibold mt-1">⚠️ This is a demo until signup</p>}
+        </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="flex flex-col items-center text-center mt-10">
-        <h2 className="text-4xl font-bold mb-4">
-          Trade, Earn, and Grow with <span className="text-yellow-400">MVZx</span>
-        </h2>
-        <p className="text-gray-300 max-w-2xl">
-          A next-gen crypto platform offering trading, staking, referrals, and AI-powered rewards.
-        </p>
-        <div className="mt-6 flex gap-4">
-          <Button onClick={() => navigate("/signup")}>Get Started</Button>
-          <Button variant="secondary" onClick={() => navigate("/ico")}>
-            Join ICO
-          </Button>
-        </div>
-      </section>
+      {/* Main content with wheel */}
+      <main className="flex-1 px-3 pb-3 overflow-auto">
+        {/* Your wheel implementation here */}
+      </main>
 
-      {/* Features Grid */}
-      <section className="grid grid-cols-2 md:grid-cols-5 gap-6 mt-16 w-full max-w-4xl">
-        {featureButtons.map((btn, idx) => (
-          <div
-            key={idx}
-            onClick={() => handleNavigation(btn.path)}
-            className="flex flex-col items-center p-4 bg-gray-800 rounded-2xl shadow-md cursor-pointer hover:bg-gray-700 transition"
-          >
-            <btn.icon className="w-8 h-8 text-yellow-400 mb-2" />
-            <span>{btn.label}</span>
-          </div>
-        ))}
-      </section>
-
-      {/* Footer */}
-      <footer className="mt-20 text-gray-500 text-sm">
-        © {new Date().getFullYear()} MVZx. All rights reserved.
-      </footer>
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setUserLoggedIn(true);
+          setDemoWarning(false);
+          loadUserData();
+        }}
+      />
     </div>
   );
 }
