@@ -1,7 +1,5 @@
-import React from "react";
+ import React from "react";
 import { Routes, Route } from "react-router-dom";
-
-// Import all 9 pages
 import LandingPage from "./pages/LandingPage";
 import Buy from "./pages/Buy";
 import DirectBuy from "./pages/DirectBuy";
@@ -11,10 +9,10 @@ import Escrow from "./pages/Escrow";
 import Voting from "./pages/Voting";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
-
-// Import extras
 import Game from "./pages/Game";
 import Leaderboard from "./pages/Leaderboard";
+import AdminPanel from "./pages/AdminPanel";
+import MatrixTree from "./pages/MatrixTree";
 
 function App() {
   return (
@@ -30,6 +28,8 @@ function App() {
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/game" element={<Game />} />
       <Route path="/leaderboard" element={<Leaderboard />} />
+      <Route path="/admin" element={<AdminPanel />} />
+      <Route path="/matrix-tree" element={<MatrixTree />} />
     </Routes>
   );
 }
