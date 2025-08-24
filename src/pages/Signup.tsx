@@ -1,8 +1,8 @@
-// src/pages/Signup.tsx
-import React, { useState } from "react";
+ import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { Mail, Lock, Wallet as WalletIcon, UserPlus } from "lucide-react";
+import { Mail, Lock, UserPlus, Wallet as WalletIcon } from "lucide-react";
 import { api, setAuth } from "../services/api";
+import { generateRealWallet, encryptPrivateKey } from "../services/walletService";
 import Button from "../components/UI/Button";
 import Card from "../components/UI/Card";
 
@@ -13,13 +13,14 @@ export default function Signup() {
     pin: "",
     confirmPin: ""
   });
+  const [walletAddress, setWalletAddress] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const generateWalletAddress = () => {
-    // Simple mock wallet address generation for demo
-    return "0x" + Math.random().toString(16).substr(2, 40);
+  const generateWallet = () => {
+    const wallet = generateRealWallet();
+    setWalletAddress(wallet.address);
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -28,44 +29,32 @@ export default function Signup() {
     setError("");
     setSuccess("");
 
-    // Validate PIN
-    if (formData.pin.length !== 4 || !/^\d+$/.test(formData.pin)) {
-      setError("PIN must be exactly 4 digits");
-      setLoading(false);
-      return;
-    }
-
-    if (formData.pin !== formData.confirmPin) {
-      setError("PINs do not match");
-      setLoading(false);
-      return;
-    }
-
     try {
-      // Generate wallet address
-      const walletAddress = generateWalletAddress();
+      if (formData.pin.length !== 4 || !/^\d+$/.test(formData.pin)) {
+        throw new Error("PIN must be exactly 4 digits");
+      }
+
+      if (formData.pin !== formData.confirmPin) {
+        throw new Error("PINs do not match");
+      }
+
+      const address = walletAddress || generateRealWallet().address;
       
-      // Call backend API to register user
-      const res = await api.register(formData.email, walletAddress);
+      // FIXED: Use api.signup instead of api.register
+      const res = await api.signup(formData.email, address);
       
       if (res?.token && res?.user) {
-        // Store auth token and user data
         setAuth(res.token);
         localStorage.setItem("mvzx_user", JSON.stringify(res.user));
-        localStorage.setItem("mvzx_wallet", walletAddress);
+        localStorage.setItem("mvzx_wallet", address);
+        setSuccess("Account created successfully! Redirecting...");
         
-        setSuccess("Account created successfully! Redirecting to dashboard...");
-        
-        // Redirect to dashboard after successful signup
         setTimeout(() => {
           navigate("/dashboard");
         }, 1500);
-      } else {
-        setError("Failed to create account. Please try again.");
       }
     } catch (err: any) {
       setError(err.message || "Failed to create account. Please try again.");
-      console.error("Signup error:", err);
     } finally {
       setLoading(false);
     }
@@ -79,9 +68,7 @@ export default function Signup() {
             <UserPlus className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
-          <p className="text-white/70">
-            Email + 4-digit PIN. Your wallet will be created securely.
-          </p>
+          <p className="text-white/70">Email + 4-digit PIN. Your wallet will be created securely.</p>
         </div>
 
         <form onSubmit={submit} className="space-y-4">
@@ -99,6 +86,29 @@ export default function Signup() {
                 placeholder="Enter your email"
                 required
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Wallet Address
+            </label>
+            <div className="relative">
+              <WalletIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
+              <input
+                type="text"
+                value={walletAddress}
+                onChange={(e) => setWalletAddress(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-500"
+                placeholder="Optional: Enter existing wallet or generate new"
+              />
+              <button
+                type="button"
+                onClick={generateWallet}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 px-2 py-1 text-xs bg-purple-600 hover:bg-purple-700 rounded text-white"
+              >
+                Generate
+              </button>
             </div>
           </div>
 
@@ -169,13 +179,9 @@ export default function Signup() {
 
           <div className="text-center text-sm text-white/70">
             Already have an account?{" "}
-            <button 
-              type="button" 
-              onClick={() => navigate("/dashboard")}
-              className="text-purple-300 hover:text-purple-100 underline"
-            >
+            <Link to="/" className="text-purple-300 hover:text-purple-100 underline">
               Sign In
-            </button>
+            </Link>
           </div>
         </form>
 
