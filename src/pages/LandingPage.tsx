@@ -1,12 +1,12 @@
  import React, { useState, useRef, useEffect } from "react";
 
 const prizes = [
-  { label: "0.125 MVZx", color: "#FFD700", value: 0.125, sound: true }, // yellow
-  { label: "0.25 MVZx", color: "#FFA500", value: 0.25, sound: true },  // orange
-  { label: "0.5 MVZx", color: "#1E90FF", value: 0.5, sound: true },    // blue
-  { label: "0.75 MVZx", color: "#800080", value: 0.75, sound: true },  // purple
-  { label: "3 MVZx", color: "#228B22", value: 3, sound: true },        // green
-  { label: "Try Again", color: "#808080", value: 0, sound: false }     // gray
+  { label: "0.125 MVZx", color: "#FFD700", value: 0.125, sound: false }, // yellow
+  { label: "0.25 MVZx", color: "#FFA500", value: 0.25, sound: false },  // orange
+  { label: "0.5 MVZx", color: "#1E90FF", value: 0.5, sound: false },    // blue
+  { label: "0.75 MVZx", color: "#800080", value: 0.75, sound: false },  // purple
+  { label: "3 MVZx", color: "#228B22", value: 3, sound: false },        // green
+  { label: "Try Again", color: "#808080", value: 0, sound: true }     // gray
 ];
 
 export default function LandingPage() {
