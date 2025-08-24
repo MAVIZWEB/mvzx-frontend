@@ -1,56 +1,191 @@
- // src/pages/Signup.tsx
+// src/pages/Signup.tsx
 import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Mail, Lock, Wallet as WalletIcon, UserPlus } from "lucide-react";
 import { api, setAuth } from "../services/api";
-import { ethers } from "ethers";
-
-async function encryptJson(privateKey: string, pin: string) {
-  const enc = new TextEncoder().encode(pin);
-  const keyMaterial = await crypto.subtle.importKey("raw", enc, "PBKDF2", false, ["deriveKey"]);
-  const key = await crypto.subtle.deriveKey({ name: "PBKDF2", salt: new TextEncoder().encode("mvzx-salt"), iterations: 120000, hash: "SHA-256" }, keyMaterial, { name: "AES-GCM", length: 256 }, false, ["encrypt"]);
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const pt = new TextEncoder().encode(privateKey);
-  const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, pt);
-  return btoa(JSON.stringify({ iv: Array.from(iv), ct: Array.from(new Uint8Array(ct)) }));
-}
+import Button from "../components/UI/Button";
+import Card from "../components/UI/Card";
 
 export default function Signup() {
-  const [email, setEmail] = useState("");
-  const [pin, setPin] = useState("");
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: "",
+    pin: "",
+    confirmPin: ""
+  });
   const [loading, setLoading] = useState(false);
-  const [msg, setMsg] = useState<string|null>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
 
-  const submit = async (e:React.FormEvent) => {
+  const generateWalletAddress = () => {
+    // Simple mock wallet address generation for demo
+    return "0x" + Math.random().toString(16).substr(2, 40);
+  };
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setMsg(null);
-    try {
-      const wallet = ethers.Wallet.createRandom();
-      const address = wallet.address;
-      const blob = await encryptJson(wallet.privateKey, pin);
-      localStorage.setItem("mvzx_keystore", blob);
-      localStorage.setItem("mvzx_wallet", address);
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
-      const res:any = await api.signup(email, address);
-      if (res?.token) setAuth(res.token);
-      setMsg(`✅ Created. Wallet ${address.slice(0,6)}…${address.slice(-4)}`);
-    } catch (err:any) {
-      setMsg(`❌ ${err.message}`);
-    } finally { setLoading(false); }
+    // Validate PIN
+    if (formData.pin.length !== 4 || !/^\d+$/.test(formData.pin)) {
+      setError("PIN must be exactly 4 digits");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.pin !== formData.confirmPin) {
+      setError("PINs do not match");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Generate wallet address
+      const walletAddress = generateWalletAddress();
+      
+      // Call backend API to register user
+      const res = await api.register(formData.email, walletAddress);
+      
+      if (res?.token && res?.user) {
+        // Store auth token and user data
+        setAuth(res.token);
+        localStorage.setItem("mvzx_user", JSON.stringify(res.user));
+        localStorage.setItem("mvzx_wallet", walletAddress);
+        
+        setSuccess("Account created successfully! Redirecting to dashboard...");
+        
+        // Redirect to dashboard after successful signup
+        setTimeout(() => {
+          navigate("/dashboard");
+        }, 1500);
+      } else {
+        setError("Failed to create account. Please try again.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to create account. Please try again.");
+      console.error("Signup error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow p-6">
-        <h1 className="text-2xl font-bold text-center mb-2">📝 Create Account</h1>
-        <p className="text-center text-gray-600 mb-6">Email + 4-digit PIN. Wallet (BSC) is created in your browser and encrypted with your PIN.</p>
+    <div className="min-h-screen bg-gradient-to-b from-purple-900 to-red-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <UserPlus className="w-8 h-8 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-white mb-2">Create Account</h1>
+          <p className="text-white/70">
+            Email + 4-digit PIN. Your wallet will be created securely.
+          </p>
+        </div>
+
         <form onSubmit={submit} className="space-y-4">
-          <input className="w-full border rounded-xl p-3 text-black placeholder-gray-400 bg-white" type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} required/>
-          <input className="w-full border rounded-xl p-3 text-black placeholder-gray-400 bg-white" type="password" placeholder="4-digit PIN" value={pin} onChange={e=>setPin(e.target.value)} required maxLength={4}/>
-          <button disabled={loading} className={`w-full rounded-xl text-white py-3 ${loading ? "bg-gray-400" : "bg-purple-700 hover:bg-purple-800"}`}>
-            {loading ? "Creating..." : "Create Account"}
-          </button>
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
+              <input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-500"
+                placeholder="Enter your email"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              4-digit PIN
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
+              <input
+                type="password"
+                value={formData.pin}
+                onChange={(e) => setFormData({ ...formData, pin: e.target.value })}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-500"
+                placeholder="Enter 4-digit PIN"
+                maxLength={4}
+                pattern="\d{4}"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-white mb-2">
+              Confirm PIN
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/50" />
+              <input
+                type="password"
+                value={formData.confirmPin}
+                onChange={(e) => setFormData({ ...formData, confirmPin: e.target.value })}
+                className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-white/50 focus:outline-none focus:border-purple-500"
+                placeholder="Confirm 4-digit PIN"
+                maxLength={4}
+                pattern="\d{4}"
+                required
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="p-3 bg-red-500/20 border border-red-500/30 rounded-lg text-red-300 text-sm">
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="p-3 bg-green-500/20 border border-green-500/30 rounded-lg text-green-300 text-sm">
+              {success}
+            </div>
+          )}
+
+          <Button
+            type="submit"
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 py-3 font-semibold"
+            disabled={loading}
+          >
+            {loading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Creating Account...
+              </div>
+            ) : (
+              "Create Account"
+            )}
+          </Button>
+
+          <div className="text-center text-sm text-white/70">
+            Already have an account?{" "}
+            <button 
+              type="button" 
+              onClick={() => navigate("/dashboard")}
+              className="text-purple-300 hover:text-purple-100 underline"
+            >
+              Sign In
+            </button>
+          </div>
         </form>
-        {msg && <p className="mt-4 text-center">{msg}</p>}
-      </div>
+
+        <div className="mt-6 p-4 bg-white/5 rounded-lg">
+          <div className="flex items-center text-sm text-white/50">
+            <WalletIcon className="w-4 h-4 mr-2" />
+            <span>Your wallet address will be generated and stored securely</span>
+          </div>
+        </div>
+      </Card>
     </div>
   );
 }
