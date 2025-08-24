@@ -90,12 +90,12 @@ export default function LandingPage() {
   // Prize map
   const prizes = useMemo(
     () => [
-      { label: "0.125 MVZx", short: "0.125", color: "#fbbf24", isLose: false }, // Yellow
-      { label: "0.25 MVZx",  short: "0.25",  color: "#f97316", isLose: false }, // Orange
-      { label: "Try Again",  short: "Try",   color: "#6b7280", isLose: true  }, // Gray
-      { label: "0.5 MVZx",   short: "0.5",   color: "#3b82f6", isLose: false }, // Blue
-      { label: "0.75 MVZx",  short: "0.75",  color: "#8b5cf6", isLose: false }, // Purple
-      { label: "3 MVZx 🎉",  short: "3",     color: "#22c55e", isLose: false }, // Green
+      { label: "0.125 MVZx", short: "0.125", color: "#fbbf24", isLose: true }, // Yellow
+      { label: "0.25 MVZx",  short: "0.25",  color: "#f97316", isLose: true }, // Orange
+      { label: "Try Again",  short: "Try",   color: "#6b7280", isLose: false  }, // Gray
+      { label: "0.5 MVZx",   short: "0.5",   color: "#3b82f6", isLose: true }, // Blue
+      { label: "0.75 MVZx",  short: "0.75",  color: "#8b5cf6", isLose: true }, // Purple
+      { label: "3 MVZx 🎉",  short: "3",     color: "#22c55e", isLose: true }, // Green
     ],
     []
   );
