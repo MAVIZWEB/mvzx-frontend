@@ -1,33 +1,29 @@
-import React, { useState } from "react";
+ import React, { useState } from "react";
 import { api } from "../services/api";
 
-const Admin: React.FC = () => {
+const AdminPage: React.FC = () => {
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
 
   const login = async () => {
-    setMsg(null);
     try {
-      await api.adminLogin({ email, pin });
-      setMsg("✅ Admin logged in.");
-      window.location.href = "/admin/dashboard"; // placeholder for actual dashboard
+      const res = await api.login({ email, pin });
+      setMsg("✅ Logged in successfully.");
     } catch (err: any) {
       setMsg(`❌ ${err.message}`);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
-      <div className="bg-white p-6 rounded-2xl shadow max-w-md w-full">
-        <h1 className="text-2xl font-bold mb-4">Admin Login / Signup</h1>
-        <input type="email" placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="w-full mb-3 p-3 border rounded-xl" />
-        <input type="password" placeholder="4-digit PIN" value={pin} onChange={e=>setPin(e.target.value)} className="w-full mb-3 p-3 border rounded-xl" />
-        <button onClick={login} className="w-full py-3 bg-red-600 text-white rounded-xl hover:bg-red-700">Login / Signup</button>
-        {msg && <p className="mt-3">{msg}</p>}
-      </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-100 p-6">
+      <h1 className="text-3xl font-bold mb-6">ADMIN LOGIN</h1>
+      <input placeholder="Email" value={email} onChange={e=>setEmail(e.target.value)} className="mb-3 p-3 border rounded-xl w-full max-w-sm" />
+      <input placeholder="4-digit PIN" value={pin} onChange={e=>setPin(e.target.value)} className="mb-3 p-3 border rounded-xl w-full max-w-sm" />
+      <button onClick={login} className="bg-red-600 hover:bg-red-700 text-white py-3 px-6 rounded-xl">ADMIN LOGIN</button>
+      {msg && <p className="mt-4">{msg}</p>}
     </div>
   );
 };
 
-export default Admin;
+export default AdminPage;
