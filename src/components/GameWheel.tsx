@@ -1,128 +1,124 @@
- import React, { useEffect, useState } from "react";
+ import { useState, useEffect, useRef } from "react";
 import axios from "axios";
-import GameWheel from "../components/GameWheel";
 
-interface User {
-  id: string;
-  email: string;
-  balance: number; // MVZx balance
-  freeSpins: number;
-}
+type Sector = "1" | "3" | "Try Again" | "5" | "7";
 
-export default function GamePage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [email, setEmail] = useState("");
-  const [loading, setLoading] = useState(false);
+const sectors: Sector[] = ["1", "3", "Try Again", "5", "7"];
 
-  // Signup/Login (simple)
-  const handleLogin = async () => {
-    if (!email) return alert("Enter your email");
+const GameWheel = ({ walletAddress }: { walletAddress: string }) => {
+  const [spinsLeft, setSpinsLeft] = useState(3); // 3 free spins
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [result, setResult] = useState<Sector | null>(null);
+  const wheelRef = useRef<HTMLDivElement>(null);
 
-    setLoading(true);
-    try {
-      const res = await axios.post("https://your-backend-domain.com/users/login", { email });
-      // backend returns user object with id, balance, freeSpins
-      setUser(res.data.user);
-    } catch (error) {
-      console.error("Login error:", error);
-      alert("Login failed. Try again.");
-    }
-    setLoading(false);
-  };
+  // Sounds
+  const winSound = new Audio("/sounds/clap.mp3");
+  const trySound = new Audio("/sounds/try.mp3");
 
-  // Handle reward from wheel
-  const handleReward = (reward: string) => {
-    if (!user) return;
-
-    let newBalance = user.balance;
-    let newFreeSpins = user.freeSpins;
-
-    if (reward === "Try Again") {
-      // do nothing
-    } else {
-      // parse number from reward string
-      const amount = parseInt(reward.split(" ")[0]);
-      newBalance += amount;
+  const handleSpin = async () => {
+    if (isSpinning) return;
+    if (spinsLeft <= 0) {
+      alert("No free spins left. Please buy MVZx Tokens to continue.");
+      return;
     }
 
-    newFreeSpins = Math.max(0, newFreeSpins - 1);
-
-    setUser({ ...user, balance: newBalance, freeSpins: newFreeSpins });
-  };
-
-  // Buy MVZx to continue
-  const handleBuyMVZx = async () => {
-    if (!user) return;
-
-    const amount = parseInt(prompt("Enter how many MVZx to buy:", "10") || "0");
-    if (!amount || amount <= 0) return;
+    setIsSpinning(true);
 
     try {
-      const res = await axios.post("https://your-backend-domain.com/users/buy", {
-        userId: user.id,
-        amount,
+      // Call backend to spin
+      const res = await axios.post("http://localhost:5000/games/spin", {
+        walletAddress,
       });
-      setUser({ ...user, balance: res.data.balance });
-      alert(`You bought ${amount} MVZx!`);
-    } catch (error) {
-      console.error("Buy error:", error);
-      alert("Purchase failed.");
+
+      const spinResult: Sector = res.data.result; // e.g., "1", "Try Again"
+
+      // Animate wheel rotation
+      const sectorIndex = sectors.indexOf(spinResult);
+      const totalSectors = sectors.length;
+      const degreePerSector = 360 / totalSectors;
+
+      const randomRounds = Math.floor(Math.random() * 3 + 3); // 3-5 full spins
+      const finalDegree = randomRounds * 360 + sectorIndex * degreePerSector;
+
+      if (wheelRef.current) {
+        wheelRef.current.style.transition = "transform 4s ease-out";
+        wheelRef.current.style.transform = `rotate(${finalDegree}deg)`;
+      }
+
+      // Wait for animation to finish
+      setTimeout(() => {
+        setResult(spinResult);
+
+        // Play sound
+        if (spinResult === "Try Again") {
+          trySound.play();
+        } else {
+          winSound.play();
+        }
+
+        setSpinsLeft((prev) => prev - 1);
+        setIsSpinning(false);
+      }, 4000);
+    } catch (err) {
+      console.error(err);
+      alert("Spin failed. Try again.");
+      setIsSpinning(false);
     }
   };
+
+  // Reset wheel for next spin
+  useEffect(() => {
+    if (wheelRef.current) {
+      wheelRef.current.style.transition = "none";
+      wheelRef.current.style.transform = "rotate(0deg)";
+    }
+  }, [result]);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex flex-col items-center p-6">
-      {!user ? (
-        <div className="flex flex-col gap-4 w-full max-w-sm">
-          <h1 className="text-2xl font-bold text-center">Login / Signup</h1>
-          <input
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="p-3 rounded text-black"
-          />
-          <button
-            onClick={handleLogin}
-            disabled={loading}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-3 rounded font-bold disabled:opacity-50"
-          >
-            {loading ? "Loading..." : "Login / Signup"}
-          </button>
+    <div className="flex flex-col items-center mt-8">
+      <div className="relative w-64 h-64">
+        {/* Wheel */}
+        <div
+          ref={wheelRef}
+          className="w-full h-full rounded-full border-8 border-gray-700 flex items-center justify-center relative bg-gradient-to-tr from-purple-700 via-purple-900 to-purple-700"
+        >
+          {/* Sectors */}
+          {sectors.map((s, i) => {
+            const rotate = (360 / sectors.length) * i;
+            return (
+              <div
+                key={i}
+                className="absolute w-1/2 h-1/2 origin-bottom-left flex items-center justify-center"
+                style={{ transform: `rotate(${rotate}deg)` }}
+              >
+                <span className="text-white font-bold">{s}</span>
+              </div>
+            );
+          })}
         </div>
-      ) : (
-        <div className="flex flex-col items-center gap-6 w-full max-w-lg">
-          <div className="flex justify-between w-full bg-gray-800 p-4 rounded">
-            <div>
-              <p className="font-bold">Email:</p>
-              <p>{user.email}</p>
-            </div>
-            <div>
-              <p className="font-bold">MVZx Balance:</p>
-              <p>{user.balance}</p>
-            </div>
-            <div>
-              <p className="font-bold">Free Spins:</p>
-              <p>{user.freeSpins}</p>
-            </div>
-          </div>
+        {/* Pointer */}
+        <div className="absolute top-[-10px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-16 border-b-red-600"></div>
+      </div>
 
-          <GameWheel
-            userId={user.id}
-            freeSpins={user.freeSpins}
-            onReward={handleReward}
-          />
+      <button
+        onClick={handleSpin}
+        disabled={isSpinning || spinsLeft <= 0}
+        className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-bold disabled:opacity-50"
+      >
+        {isSpinning ? "Spinning..." : "Spin"}
+      </button>
 
-          {user.freeSpins <= 0 && (
-            <button
-              onClick={handleBuyMVZx}
-              className="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 rounded font-bold"
-            >
-              Buy MVZx to Spin
-            </button>
-          )}
-        </div>
+      <p className="mt-4">
+        Spins left: <span className="font-bold">{spinsLeft}</span>
+      </p>
+
+      {result && (
+        <p className="mt-2 text-lg">
+          Last spin result: <span className="font-bold">{result}</span>
+        </p>
       )}
     </div>
   );
-}
+};
+
+export default GameWheel;
