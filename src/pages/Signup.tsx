@@ -1,100 +1,82 @@
  import { useState } from "react";
-import axios from "axios";
+import { signup } from "../api/user";
 
-const SignupForm = () => {
+export default function Signup() {
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
-  const [walletAddress, setWalletAddress] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [wallet, setWallet] = useState("");
+  const [error, setError] = useState("");
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
 
     if (!email || !pin || !confirmPin) {
-      setMessage("All fields are required.");
+      setError("All fields are required");
       return;
     }
-
+    if (pin.length !== 4 || confirmPin.length !== 4) {
+      setError("PIN must be 4 digits");
+      return;
+    }
     if (pin !== confirmPin) {
-      setMessage("PIN and Confirm PIN do not match.");
+      setError("PINs do not match");
       return;
     }
 
-    setLoading(true);
     try {
-      const res = await axios.post("http://localhost:5000/users/signup", {
-        email,
-        pin,
-      });
-
-      setWalletAddress(res.data.walletAddress); // wallet assigned by backend
-      setMessage("Signup successful! Your wallet address is: " + res.data.walletAddress);
+      const res = await signup(email, pin);
+      setWallet(res.data.wallet); // backend returns { wallet: '0x...' }
+      alert("Signup successful! Your wallet: " + res.data.wallet);
     } catch (err: any) {
-      setMessage(err.response?.data?.error || "Signup failed");
-    } finally {
-      setLoading(false);
+      setError(err.response?.data?.message || "Signup failed");
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-12 p-6 bg-gray-900 rounded-lg shadow-lg">
-      <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
-      <form onSubmit={handleSignup} className="space-y-4">
-        <div>
-          <label className="block mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">4-digit PIN</label>
-          <input
-            type="password"
-            value={pin}
-            maxLength={4}
-            onChange={(e) => setPin(e.target.value)}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Confirm PIN</label>
-          <input
-            type="password"
-            value={confirmPin}
-            maxLength={4}
-            onChange={(e) => setConfirmPin(e.target.value)}
-            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
-            required
-          />
-        </div>
-
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white">
+      <h1 className="text-3xl font-bold mb-6">Signup</h1>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-80">
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className="p-2 rounded bg-gray-800 text-white"
+          required
+        />
+        <input
+          type="password"
+          placeholder="4-digit PIN"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          maxLength={4}
+          className="p-2 rounded bg-gray-800 text-white"
+          required
+        />
+        <input
+          type="password"
+          placeholder="Confirm PIN"
+          value={confirmPin}
+          onChange={(e) => setConfirmPin(e.target.value)}
+          maxLength={4}
+          className="p-2 rounded bg-gray-800 text-white"
+          required
+        />
+        {error && <p className="text-red-500">{error}</p>}
         <button
           type="submit"
-          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
-          disabled={loading}
+          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-bold"
         >
-          {loading ? "Signing up..." : "Sign Up"}
+          Signup
         </button>
       </form>
-
-      {message && <p className="mt-4 text-center">{message}</p>}
-
-      {walletAddress && (
-        <p className="mt-2 text-center text-green-400 font-mono">
-          Wallet: {walletAddress}
+      {wallet && (
+        <p className="mt-4 text-green-400">
+          Your wallet address: {wallet}
         </p>
       )}
     </div>
   );
-};
-
-export default SignupForm;
+}
