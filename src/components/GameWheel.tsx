@@ -11,7 +11,7 @@ const sectors = [
   { label: "3 MVZx", color: "#fbbf24" },
   { label: "Try Again", color: "#34d399" },
   { label: "5 MVZx", color: "#60a5fa" },
-  { label: "8 MVZx", color: "#a78bfa" },
+  { label: "7 MVZx", color: "#a78bfa" },
 ];
 
 export default function GameWheel({ userId, freeSpins }: GameWheelProps) {
