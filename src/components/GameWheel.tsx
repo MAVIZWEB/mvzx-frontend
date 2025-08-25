@@ -2,8 +2,9 @@
 import axios from "axios";
 
 interface GameWheelProps {
-  userId: string;
-  freeSpins: number; // tracks user's free spins
+  userId: string; // authenticated user ID
+  freeSpins: number; // tracks free spins
+  onReward?: (reward: string) => void; // optional callback to update balance in parent
 }
 
 const sectors = [
@@ -14,18 +15,23 @@ const sectors = [
   { label: "7 MVZx", color: "#a78bfa" },
 ];
 
-export default function GameWheel({ userId, freeSpins }: GameWheelProps) {
+export default function GameWheel({ userId, freeSpins, onReward }: GameWheelProps) {
   const wheelRef = useRef<HTMLDivElement>(null);
   const [spinning, setSpinning] = useState(false);
   const [reward, setReward] = useState<string | null>(null);
   const [remainingSpins, setRemainingSpins] = useState(freeSpins || 3);
-  const [audio] = useState(new Audio("/sounds/clap.mp3")); // win sound
+  const [audio] = useState(new Audio("/sounds/clap.mp3"));
 
   useEffect(() => {
     audio.load();
   }, [audio]);
 
   const spinWheel = async () => {
+    if (!userId) {
+      alert("Please login/signup to play!");
+      return;
+    }
+
     if (spinning) return;
 
     if (remainingSpins <= 0) {
@@ -38,11 +44,9 @@ export default function GameWheel({ userId, freeSpins }: GameWheelProps) {
 
     try {
       // Call backend spin endpoint
-      const res = await axios.post("https://your-backend-domain.com/games/spin", {
-        userId,
-      });
+      const res = await axios.post("https://your-backend-domain.com/games/spin", { userId });
 
-      // backend returns sector index
+      // backend returns sector index (0-4)
       const rewardIndex: number = res.data.index ?? Math.floor(Math.random() * sectors.length);
 
       const spins = 8; // full rotations
@@ -59,18 +63,22 @@ export default function GameWheel({ userId, freeSpins }: GameWheelProps) {
       // wait for spin animation
       setTimeout(() => {
         setSpinning(false);
-        setReward(sectors[rewardIndex].label);
+        const sectorReward = sectors[rewardIndex].label;
+        setReward(sectorReward);
 
-        // play sound if not "Try Again"
-        if (sectors[rewardIndex].label !== "Try Again") {
-          audio.play();
-        }
+        // play sound if MVZx reward
+        if (sectorReward !== "Try Again") audio.play();
 
+        // update remaining spins
         setRemainingSpins((prev) => prev - 1);
+
+        // callback to parent to update balance
+        if (onReward) onReward(sectorReward);
       }, 5200);
     } catch (error) {
       console.error("Spin error:", error);
       setSpinning(false);
+      alert("Error spinning wheel. Try again later.");
     }
   };
 
