@@ -1,62 +1,100 @@
  import { useState } from "react";
-import { signupUser } from "../services/api";
+import axios from "axios";
 
-export default function Signup() {
-  const [name, setName] = useState("");
+const SignupForm = () => {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [walletAddress, setWalletAddress] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!email || !pin || !confirmPin) {
+      setMessage("All fields are required.");
+      return;
+    }
+
+    if (pin !== confirmPin) {
+      setMessage("PIN and Confirm PIN do not match.");
+      return;
+    }
+
+    setLoading(true);
     try {
-      const res = await signupUser({ name, email, password });
-      setMessage("Signup successful! You can now log in.");
-      console.log(res.data);
+      const res = await axios.post("http://localhost:5000/users/signup", {
+        email,
+        pin,
+      });
+
+      setWalletAddress(res.data.walletAddress); // wallet assigned by backend
+      setMessage("Signup successful! Your wallet address is: " + res.data.walletAddress);
     } catch (err: any) {
-      setMessage(err.response?.data?.message || "Signup failed.");
+      setMessage(err.response?.data?.error || "Signup failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-950">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-gray-800 p-8 rounded-lg w-96 shadow-lg"
-      >
-        <h1 className="text-2xl font-bold mb-6 text-white">Sign Up</h1>
-        <input
-          type="text"
-          placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="w-full p-3 mb-4 rounded bg-gray-700 text-white"
-          required
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full p-3 mb-4 rounded bg-gray-700 text-white"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="w-full p-3 mb-4 rounded bg-gray-700 text-white"
-          required
-        />
+    <div className="max-w-md mx-auto mt-12 p-6 bg-gray-900 rounded-lg shadow-lg">
+      <h2 className="text-2xl font-bold mb-4 text-center">Sign Up</h2>
+      <form onSubmit={handleSignup} className="space-y-4">
+        <div>
+          <label className="block mb-1">Email</label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1">4-digit PIN</label>
+          <input
+            type="password"
+            value={pin}
+            maxLength={4}
+            onChange={(e) => setPin(e.target.value)}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block mb-1">Confirm PIN</label>
+          <input
+            type="password"
+            value={confirmPin}
+            maxLength={4}
+            onChange={(e) => setConfirmPin(e.target.value)}
+            className="w-full p-2 rounded bg-gray-800 border border-gray-700"
+            required
+          />
+        </div>
+
         <button
           type="submit"
-          className="w-full bg-red-600 hover:bg-red-700 py-3 rounded text-white font-bold"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded"
+          disabled={loading}
         >
-          Sign Up
+          {loading ? "Signing up..." : "Sign Up"}
         </button>
-        {message && <p className="mt-4 text-center text-sm">{message}</p>}
       </form>
+
+      {message && <p className="mt-4 text-center">{message}</p>}
+
+      {walletAddress && (
+        <p className="mt-2 text-center text-green-400 font-mono">
+          Wallet: {walletAddress}
+        </p>
+      )}
     </div>
   );
-}
+};
+
+export default SignupForm;
