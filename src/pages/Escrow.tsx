@@ -6,7 +6,7 @@ type Offer = { id: number; type: "BUY"|"SELL"; price: number; min: number; max: 
 const Escrow: React.FC = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [type, setType] = useState<"BUY"|"SELL">("BUY");
-  const [price, setPrice] = useState<number>(200); // NGN per MVZx as placeholder
+  const [price, setPrice] = useState<number>(200);
   const [min, setMin] = useState<number>(50);
   const [max, setMax] = useState<number>(1000);
   const [msg, setMsg] = useState<string | null>(null);
@@ -15,7 +15,7 @@ const Escrow: React.FC = () => {
     try {
       const res = await api.listOffers();
       setOffers(res || []);
-    } catch { /* ignore list errors for now */ }
+    } catch { }
   };
 
   useEffect(() => { load(); }, []);
@@ -42,9 +42,7 @@ const Escrow: React.FC = () => {
                   <div className="font-semibold">{o.type} MVZx</div>
                   <div className="text-sm text-gray-600">₦{o.price} / MVZx • {o.min}-{o.max} MVZx</div>
                 </div>
-                <button className="px-3 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">
-                  Trade
-                </button>
+                <button className="px-3 py-2 rounded-lg text-white bg-indigo-600 hover:bg-indigo-700">Trade</button>
               </li>
             ))}
             {offers.length === 0 && <li className="py-6 text-gray-500 text-sm">No offers yet.</li>}
@@ -58,15 +56,21 @@ const Escrow: React.FC = () => {
               <option value="BUY">BUY MVZx</option>
               <option value="SELL">SELL MVZx</option>
             </select>
-            <input className="border rounded-xl p-3" type="number" min={1} value={price}
-                   onChange={e=>setPrice(Number(e.target.value))} placeholder="Price (NGN per MVZx)" />
-            <input className="border rounded-xl p-3" type="number" min={1} value={min}
-                   onChange={e=>setMin(Number(e.target.value))} placeholder="Min MVZx" />
-            <input className="border rounded-xl p-3" type="number" min={1} value={max}
-                   onChange={e=>setMax(Number(e.target.value))} placeholder="Max MVZx" />
+            <input className="border rounded-xl p-3" type="number" min={1} value={price} onChange={e=>setPrice(Number(e.target.value))} placeholder="Price (NGN per MVZx)" />
+            <input className="border rounded-xl p-3" type="number" min={1} value={min} onChange={e=>setMin(Number(e.target.value))} placeholder="Min MVZx" />
+            <input className="border rounded-xl p-3" type="number" min={1} value={max} onChange={e=>setMax(Number(e.target.value))} placeholder="Max MVZx" />
             <button className="w-full py-3 rounded-xl text-white bg-indigo-700 hover:bg-indigo-800">Post Offer</button>
           </form>
+
           {msg && <p className="mt-3">{msg}</p>}
+
+          {/* ADMIN CHECKS Section */}
+          <div className="mt-6 border-t pt-4">
+            <h3 className="text-lg font-semibold mb-2">ADMIN CHECKS</h3>
+            <button onClick={()=>window.location.href="/admin"} className="py-3 px-4 bg-red-600 text-white rounded-xl hover:bg-red-700">
+              ADMIN CHECK
+            </button>
+          </div>
         </div>
       </div>
     </div>
