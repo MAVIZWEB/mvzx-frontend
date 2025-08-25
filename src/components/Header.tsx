@@ -1,23 +1,16 @@
-import React from "react";
+ import React from "react";
+import { Link } from "react-router-dom";
 
-interface HeaderProps {
-  username: string;
-  onLogout: () => void;
-}
-
-export default function Header({ username, onLogout }: HeaderProps) {
+export const Header: React.FC = () => {
   return (
-    <header className="bg-gray-900 flex justify-between items-center p-4 shadow-md">
-      <h1 className="text-xl font-bold text-white">MVZx Dashboard</h1>
-      <div className="flex items-center gap-4">
-        <span className="text-white">Hello, {username}</span>
-        <button
-          onClick={onLogout}
-          className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded font-semibold"
-        >
-          Logout
-        </button>
-      </div>
+    <header className="bg-gray-900 p-4 flex justify-between items-center">
+      <h1 className="text-xl font-bold">MVZx</h1>
+      <nav className="space-x-4">
+        <Link to="/" className="hover:text-yellow-400">Home</Link>
+        <Link to="/signup" className="hover:text-yellow-400">Signup</Link>
+        <Link to="/login" className="hover:text-yellow-400">Login</Link>
+        <Link to="/dashboard" className="hover:text-yellow-400">Dashboard</Link>
+      </nav>
     </header>
   );
-}
+};
