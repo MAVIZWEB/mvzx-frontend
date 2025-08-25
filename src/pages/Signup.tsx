@@ -1,82 +1,56 @@
- import { useState } from "react";
+ import React, { useState } from "react";
 import { signup } from "../api/user";
+import { useNavigate } from "react-router-dom";
 
-export default function Signup() {
+export const Signup: React.FC = () => {
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
-  const [wallet, setWallet] = useState("");
-  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!email || !pin || !confirmPin) {
-      setError("All fields are required");
-      return;
-    }
-    if (pin.length !== 4 || confirmPin.length !== 4) {
-      setError("PIN must be 4 digits");
-      return;
-    }
-    if (pin !== confirmPin) {
-      setError("PINs do not match");
-      return;
-    }
-
+  const handleSignup = async () => {
+    if (pin !== confirmPin) return alert("PINs do not match");
     try {
-      const res = await signup(email, pin);
-      setWallet(res.data.wallet); // backend returns { wallet: '0x...' }
-      alert("Signup successful! Your wallet: " + res.data.wallet);
+      await signup(email, pin, confirmPin);
+      alert("Signup successful!");
+      navigate("/login");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Signup failed");
+      alert(err.response?.data?.message || "Error signing up");
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-950 text-white">
-      <h1 className="text-3xl font-bold mb-6">Signup</h1>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-80">
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="p-2 rounded bg-gray-800 text-white"
-          required
-        />
-        <input
-          type="password"
-          placeholder="4-digit PIN"
-          value={pin}
-          onChange={(e) => setPin(e.target.value)}
-          maxLength={4}
-          className="p-2 rounded bg-gray-800 text-white"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Confirm PIN"
-          value={confirmPin}
-          onChange={(e) => setConfirmPin(e.target.value)}
-          maxLength={4}
-          className="p-2 rounded bg-gray-800 text-white"
-          required
-        />
-        {error && <p className="text-red-500">{error}</p>}
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 p-2 rounded font-bold"
-        >
-          Signup
-        </button>
-      </form>
-      {wallet && (
-        <p className="mt-4 text-green-400">
-          Your wallet address: {wallet}
-        </p>
-      )}
+    <div className="max-w-md mx-auto mt-24 p-6 bg-gray-800 rounded">
+      <h2 className="text-2xl mb-4">Signup</h2>
+      <input
+        type="email"
+        placeholder="Email"
+        className="w-full mb-2 p-2 rounded"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      <input
+        type="password"
+        placeholder="4-digit PIN"
+        className="w-full mb-2 p-2 rounded"
+        value={pin}
+        onChange={(e) => setPin(e.target.value)}
+        maxLength={4}
+      />
+      <input
+        type="password"
+        placeholder="Confirm PIN"
+        className="w-full mb-2 p-2 rounded"
+        value={confirmPin}
+        onChange={(e) => setConfirmPin(e.target.value)}
+        maxLength={4}
+      />
+      <button
+        onClick={handleSignup}
+        className="w-full mt-2 p-2 bg-yellow-500 text-gray-900 font-bold rounded"
+      >
+        Signup
+      </button>
     </div>
   );
-}
+};
