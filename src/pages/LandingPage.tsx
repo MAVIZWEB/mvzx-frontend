@@ -1,90 +1,66 @@
-import React, { useEffect, useState } from "react";
+ import React, { useState, useEffect, useRef } from "react";
 import { api } from "../services/api";
-import GameWheel from "./GameWheel"; // Assume wheel component
-import Mining from "./Mining";
-import Airdrop from "./Airdrop";
-import Escrow from "./Escrow";
+import Wheel from "./Wheel";
 import BuyMVZX from "./BuyMVZX";
+import Airdrop from "./Airdrop";
+import Mining from "./Mining";
 import DirectTransfer from "./DirectTransfer";
+import Escrow from "./Escrow";
+import Voting from "./Voting";
 
 const LandingPage: React.FC = () => {
-  const [showMining, setShowMining] = useState(false);
-  const [showAirdrop, setShowAirdrop] = useState(false);
-  const [showSpin, setShowSpin] = useState(false);
-  const [showBuy, setShowBuy] = useState(false);
-  const [showDirect, setShowDirect] = useState(false);
-  const [showEscrow, setShowEscrow] = useState(false);
-
   const [balance, setBalance] = useState(0);
+  const [miningTimeLeft, setMiningTimeLeft] = useState(0);
+  const miningInterval = useRef<NodeJS.Timer | null>(null);
 
   const loadBalance = async () => {
     try {
-      const res = await api.balance();
-      setBalance(res.tokens?.MVZX ?? 0);
+      const res = await api.getBalance();
+      setBalance(res.MVZX ?? 0);
     } catch {}
   };
 
-  useEffect(() => { loadBalance(); }, []);
+  useEffect(() => {
+    loadBalance();
+  }, []);
+
+  // Mining timer
+  useEffect(() => {
+    if (miningTimeLeft <= 0 && miningInterval.current) {
+      clearInterval(miningInterval.current);
+      miningInterval.current = null;
+    }
+  }, [miningTimeLeft]);
+
+  const startMiningTimer = () => {
+    if (miningInterval.current) return;
+    let msLeft = 24 * 60 * 60 * 1000; // 24 hrs
+    setMiningTimeLeft(msLeft);
+    miningInterval.current = setInterval(() => {
+      msLeft -= 1000;
+      setMiningTimeLeft(msLeft);
+    }, 1000);
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-6 flex flex-col items-center">
-
-      {/* Header: Signup / Login */}
-      <header className="w-full max-w-4xl mb-6 flex justify-between items-center">
-        <h1 className="text-3xl font-bold">MAVIZ SWAPS</h1>
-        <div>
-          <button className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 mr-2">
-            Sign Up
-          </button>
-          <button className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700">
-            Login
-          </button>
-        </div>
-      </header>
-
-      {/* Balance Display */}
-      <div className="mb-4 text-xl font-semibold">MVZx Balance: {balance}</div>
-
-      {/* Spin Wheel */}
+      <h1 className="text-4xl font-bold mb-6">MAVIZ SWAPS</h1>
+      
       <div className="mb-6">
-        <GameWheel />
+        <Wheel />
       </div>
 
-      {/* Button Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 w-full max-w-4xl">
-        <button className="py-6 rounded-xl text-xl font-semibold text-center bg-blue-600 hover:bg-blue-700"
-                onClick={()=>setShowBuy(true)}>BUY MVZx</button>
-
-        <button className="py-6 rounded-xl text-xl font-semibold text-center bg-pink-600 hover:bg-pink-700"
-                onClick={()=>setShowAirdrop(true)}>Airdrop</button>
-
-        <button className="py-6 rounded-xl text-xl font-semibold text-center bg-yellow-600 hover:bg-yellow-700"
-                onClick={()=>setShowMining(true)}>Mining</button>
-
-        <button className="py-6 rounded-xl text-xl font-semibold text-center bg-green-600 hover:bg-green-700"
-                onClick={()=>setShowSpin(true)}>Spin</button>
-
-        <button className="py-6 rounded-xl text-xl font-semibold text-center bg-indigo-600 hover:bg-indigo-700"
-                onClick={()=>setShowDirect(true)}>Direct Transfer Buy</button>
-
-        <button className="py-6 rounded-xl text-xl font-semibold text-center bg-purple-600 hover:bg-purple-700"
-                onClick={()=>setShowEscrow(true)}>Escrow P2P Trade</button>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full max-w-4xl mb-6">
+        <BuyMVZX refreshBalance={loadBalance} />
+        <Airdrop refreshBalance={loadBalance} />
+        <Mining refreshBalance={loadBalance} startMiningTimer={startMiningTimer} miningTimeLeft={miningTimeLeft} />
+        <DirectTransfer refreshBalance={loadBalance} />
+        <Escrow />
+        <Voting />
       </div>
 
-      {/* Admin Check Section */}
-      <div className="mt-8 w-full max-w-4xl p-4 bg-gray-800 rounded-xl text-center">
-        <h2 className="text-lg font-bold mb-2">ADMIN CHECKS</h2>
-        <button className="px-6 py-3 bg-red-600 hover:bg-red-700 rounded-xl"
-                onClick={()=>window.location.href="/admin"}>ADMIN CHECK</button>
-      </div>
-
-      {/* Modals */}
-      {showBuy && <BuyMVZX onClose={()=>setShowBuy(false)} />}
-      {showAirdrop && <Airdrop />}
-      {showMining && <Mining />}
-      {showSpin && <GameWheel />}
-      {showDirect && <DirectTransfer onClose={()=>setShowDirect(false)} />}
-      {showEscrow && <Escrow />}
+      <div className="text-lg mt-4">Total MVZx: {balance}</div>
+      {miningTimeLeft > 0 && <div>Mining ends in: {(miningTimeLeft / 1000).toFixed(0)}s</div>}
     </div>
   );
 };
