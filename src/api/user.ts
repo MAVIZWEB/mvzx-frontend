@@ -1,72 +1,39 @@
  import axios from "axios";
 
-const API_BASE = "https://your-backend-domain.com"; // replace with your deployed backend URL
+const BASE_URL = "https://yourbackend.com"; // change to your deployed backend
 
-// ==================== USER SIGNUP ====================
-export const signup = async (email: string, pin: string, confirmPin: string) => {
-  return axios.post(`${API_BASE}/users/signup`, {
-    email,
-    pin,
-    confirmPin,
-  });
-};
+// Signup with email and PIN
+export const signup = (email: string, pin: string, confirmPin: string) =>
+  axios.post(`${BASE_URL}/user/signup`, { email, pin, confirmPin });
 
-// ==================== USER LOGIN ====================
-export const login = async (email: string, pin: string) => {
-  return axios.post(`${API_BASE}/users/login`, { email, pin });
-};
+// Login with email and PIN
+export const login = (email: string, pin: string) =>
+  axios.post(`${BASE_URL}/user/login`, { email, pin });
 
-// ==================== GET USER PROFILE ====================
-export const getProfile = async (token: string) => {
-  return axios.get(`${API_BASE}/users/profile`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-};
+// Spin the game
+export const spinGame = (token: string) =>
+  axios.post(`${BASE_URL}/games/spin`, {}, { headers: { Authorization: `Bearer ${token}` } });
 
-// ==================== GET WALLET INFO ====================
-export const getWallet = async (token: string) => {
-  return axios.get(`${API_BASE}/users/wallet`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-};
+// Get user's token balance
+export const getBalance = (token: string) =>
+  axios.get(`${BASE_URL}/user/balance`, { headers: { Authorization: `Bearer ${token}` } });
 
-// ==================== PURCHASE MVZx TOKENS ====================
-export const purchaseTokens = async (
-  token: string,
-  amount: number,
-  method: "flutterwave" | "usdt" | "manual",
-  details?: any
-) => {
-  return axios.post(
-    `${API_BASE}/users/purchase`,
-    { amount, method, details },
+// Purchase MVZx tokens via selected method
+export const purchaseTokens = (token: string, amount: number, method: string) =>
+  axios.post(
+    `${BASE_URL}/user/purchase`,
+    { amount, method },
     { headers: { Authorization: `Bearer ${token}` } }
   );
-};
 
-// ==================== GET MATRIX INFO ====================
-export const getMatrix = async (token: string) => {
-  return axios.get(`${API_BASE}/users/matrix`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-};
+// Get user's matrix positions and rewards
+export const getMatrix = (token: string) =>
+  axios.get(`${BASE_URL}/user/matrix`, { headers: { Authorization: `Bearer ${token}` } });
 
-// ==================== WITHDRAW TOKENS ====================
-export const withdrawTokens = async (
-  token: string,
-  amount: number,
-  method: "flutterwave" | "usdt" | "manual",
-  details?: any
-) => {
-  return axios.post(
-    `${API_BASE}/users/withdraw`,
-    { amount, method, details },
+// Request withdrawal
+export const requestWithdrawal = (token: string, amount: number, method: string) =>
+  axios.post(
+    `${BASE_URL}/user/withdraw`,
+    { amount, method },
     { headers: { Authorization: `Bearer ${token}` } }
   );
-};
-
-// ==================== LOGOUT ====================
-export const logout = () => {
-  localStorage.removeItem("mvzx_token");
-  localStorage.removeItem("mvzx_wallet");
-};
