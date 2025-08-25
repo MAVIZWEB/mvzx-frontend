@@ -1,40 +1,97 @@
- // src/pages/DirectBuy.tsx
-import React, { useState } from "react";
-import { api } from "../services/api";
+ import { useState } from "react";
+import toast from "react-hot-toast";
 
-export default function DirectBuy(){
-  const [payerName,setPayerName]=useState("");
-  const [receiptDate,setReceiptDate]=useState("");
-  const [receiptTime,setReceiptTime]=useState("");
-  const [phone,setPhone]=useState("");
-  const [amount,setAmount]=useState<number>(2000);
-  const [loading,setLoading]=useState(false);
-  const [msg,setMsg]=useState<string|null>(null);
+export default function DirectTransferBuy() {
+  const [form, setForm] = useState({
+    amount: "",
+    wallet: "",
+    bankReference: "",
+    receiptUrl: "",
+  });
 
-  const submit = async (e:React.FormEvent) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true); setMsg(null);
+
     try {
-      await api.manualDeposit({ payerName, receiptDate, receiptTime, phone, amount, currency: "NGN" });
-      setMsg("✅ Submitted. Admin will verify and credit MVZx & matrix positions.");
-    } catch (err:any) { setMsg(`❌ ${err.message}`); } finally { setLoading(false); }
+      const res = await fetch("http://localhost:4000/api/direct-transfer", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(form),
+      });
+
+      if (res.ok) {
+        toast.success("Transfer request submitted! Awaiting admin approval.");
+        setForm({ amount: "", wallet: "", bankReference: "", receiptUrl: "" });
+      } else {
+        toast.error("Failed to submit transfer request");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error");
+    }
   };
 
   return (
-    <div className="min-h-screen flex justify-center p-6 bg-gray-50">
-      <div className="w-full max-w-lg bg-white rounded-2xl shadow p-6">
-        <h1 className="text-2xl font-bold mb-2">🏦 Direct Transfer Buy</h1>
-        <p className="text-gray-600 mb-4">Pay to: <b>Masses • UBA • 1026664654</b>. Submit receipt details below for admin verification.</p>
-        <form onSubmit={submit} className="grid gap-4">
-          <input className="border rounded-xl p-3 text-black bg-white" placeholder="Payer Full Name" value={payerName} onChange={e=>setPayerName(e.target.value)} required/>
-          <input className="border rounded-xl p-3 text-black bg-white" type="date" value={receiptDate} onChange={e=>setReceiptDate(e.target.value)} required/>
-          <input className="border rounded-xl p-3 text-black bg-white" type="time" value={receiptTime} onChange={e=>setReceiptTime(e.target.value)} required/>
-          <input className="border rounded-xl p-3 text-black bg-white" type="tel" placeholder="080..." value={phone} onChange={e=>setPhone(e.target.value)} required/>
-          <input className="border rounded-xl p-3 text-black bg-white" type="number" min={2000} step={100} value={amount} onChange={e=>setAmount(Number(e.target.value))} required/>
-          <button disabled={loading} className={`w-full rounded-xl text-white py-3 ${loading?"bg-gray-400":"bg-blue-600 hover:bg-blue-700"}`}>{loading?"Submitting...":"Submit Payment Proof"}</button>
-        </form>
-        {msg && <p className="mt-4">{msg}</p>}
-      </div>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded-lg p-8 w-96"
+      >
+        <h2 className="text-2xl font-bold text-center mb-6">Direct Transfer Buy</h2>
+
+        <input
+          type="number"
+          name="amount"
+          placeholder="Enter amount sent"
+          value={form.amount}
+          onChange={handleChange}
+          className="w-full mb-4 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <input
+          type="text"
+          name="wallet"
+          placeholder="Your Wallet Address"
+          value={form.wallet}
+          onChange={handleChange}
+          className="w-full mb-4 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <input
+          type="text"
+          name="bankReference"
+          placeholder="Bank Transfer Reference No."
+          value={form.bankReference}
+          onChange={handleChange}
+          className="w-full mb-4 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <input
+          type="text"
+          name="receiptUrl"
+          placeholder="Link to Upload Receipt (e.g. Imgur/Drive)"
+          value={form.receiptUrl}
+          onChange={handleChange}
+          className="w-full mb-6 px-3 py-2 border rounded-lg"
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+        >
+          Submit for Admin Approval
+        </button>
+      </form>
     </div>
   );
 }
