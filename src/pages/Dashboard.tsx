@@ -1,9 +1,17 @@
- import React from "react";
-import { GameWheel } from "../components/GameWheel";
+ // src/pages/Dashboard.tsx
+import React from "react";
 
-export const Dashboard: React.FC = () => (
-  <div className="p-4">
-    <h1 className="text-3xl font-bold text-center">Dashboard</h1>
-    <GameWheel />
-  </div>
-);
+const Dashboard: React.FC = () => {
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+      <h1 className="text-3xl font-bold text-gray-800 mb-4">
+        Dashboard
+      </h1>
+      <p className="text-gray-600">
+        Welcome to your dashboard. Features will appear here soon.
+      </p>
+    </div>
+  );
+};
+
+export default Dashboard;
