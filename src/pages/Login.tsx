@@ -1,47 +1,77 @@
- import React, { useState } from "react";
-import { login } from "../api/user";
+  import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
-export const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [pin, setPin] = useState("");
+export default function Login() {
   const navigate = useNavigate();
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
-  const handleLogin = async () => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     try {
-      const res = await login(email, pin);
-      localStorage.setItem("mvzx_token", res.data.token);
-      localStorage.setItem("mvzx_wallet", res.data.wallet);
-      navigate("/dashboard");
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Login failed");
+      const res = await fetch("http://localhost:4000/api/user/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.setItem("token", data.token);
+        toast.success("Login successful!");
+        navigate("/");
+      } else {
+        toast.error("Invalid credentials");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error");
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-24 p-6 bg-gray-800 rounded">
-      <h2 className="text-2xl mb-4">Login</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        className="w-full mb-2 p-2 rounded"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="PIN"
-        className="w-full mb-2 p-2 rounded"
-        value={pin}
-        onChange={(e) => setPin(e.target.value)}
-        maxLength={4}
-      />
-      <button
-        onClick={handleLogin}
-        className="w-full mt-2 p-2 bg-yellow-500 text-gray-900 font-bold rounded"
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded-lg p-8 w-96"
       >
-        Login
-      </button>
+        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          className="w-full mb-4 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          className="w-full mb-6 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-gray-600 text-white py-2 rounded-lg hover:bg-gray-700"
+        >
+          Login
+        </button>
+      </form>
     </div>
   );
-};
+}
