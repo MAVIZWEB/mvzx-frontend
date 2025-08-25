@@ -1,124 +1,60 @@
- import { useState, useEffect, useRef } from "react";
-import axios from "axios";
+ import React, { useState } from "react";
+import { spinGame } from "../api/user"; // backend POST /games/spin
 
-type Sector = "1" | "3" | "Try Again" | "5" | "7";
+const sectors = ["1 MVZx", "3 MVZx", "Try Again", "5 MVZx", "7 MVZx"];
 
-const sectors: Sector[] = ["1", "3", "Try Again", "5", "7"];
-
-const GameWheel = ({ walletAddress }: { walletAddress: string }) => {
-  const [spinsLeft, setSpinsLeft] = useState(3); // 3 free spins
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [result, setResult] = useState<Sector | null>(null);
-  const wheelRef = useRef<HTMLDivElement>(null);
-
-  // Sounds
-  const winSound = new Audio("/sounds/clap.mp3");
-  const trySound = new Audio("/sounds/try.mp3");
+export const GameWheel: React.FC = () => {
+  const [angle, setAngle] = useState(0);
+  const [result, setResult] = useState("");
 
   const handleSpin = async () => {
-    if (isSpinning) return;
-    if (spinsLeft <= 0) {
-      alert("No free spins left. Please buy MVZx Tokens to continue.");
-      return;
-    }
+    const token = localStorage.getItem("mvzx_token");
+    if (!token) return alert("Please login first!");
 
-    setIsSpinning(true);
+    const spinIndex = Math.floor(Math.random() * sectors.length);
+    const newAngle = 3600 + spinIndex * (360 / sectors.length);
+    setAngle(newAngle);
 
+    // backend request
     try {
-      // Call backend to spin
-      const res = await axios.post("http://localhost:5000/games/spin", {
-        walletAddress,
-      });
-
-      const spinResult: Sector = res.data.result; // e.g., "1", "Try Again"
-
-      // Animate wheel rotation
-      const sectorIndex = sectors.indexOf(spinResult);
-      const totalSectors = sectors.length;
-      const degreePerSector = 360 / totalSectors;
-
-      const randomRounds = Math.floor(Math.random() * 3 + 3); // 3-5 full spins
-      const finalDegree = randomRounds * 360 + sectorIndex * degreePerSector;
-
-      if (wheelRef.current) {
-        wheelRef.current.style.transition = "transform 4s ease-out";
-        wheelRef.current.style.transform = `rotate(${finalDegree}deg)`;
-      }
-
-      // Wait for animation to finish
-      setTimeout(() => {
-        setResult(spinResult);
-
-        // Play sound
-        if (spinResult === "Try Again") {
-          trySound.play();
-        } else {
-          winSound.play();
-        }
-
-        setSpinsLeft((prev) => prev - 1);
-        setIsSpinning(false);
-      }, 4000);
+      const res = await spinGame(token);
+      setResult(sectors[spinIndex]);
+      if (sectors[spinIndex] !== "Try Again") new Audio("/clap.mp3").play();
     } catch (err) {
       console.error(err);
-      alert("Spin failed. Try again.");
-      setIsSpinning(false);
+      alert("Error spinning. Try again.");
     }
   };
 
-  // Reset wheel for next spin
-  useEffect(() => {
-    if (wheelRef.current) {
-      wheelRef.current.style.transition = "none";
-      wheelRef.current.style.transform = "rotate(0deg)";
-    }
-  }, [result]);
-
   return (
-    <div className="flex flex-col items-center mt-8">
-      <div className="relative w-64 h-64">
-        {/* Wheel */}
+    <div className="flex flex-col items-center mt-6">
+      <div className="relative w-64 h-64 border-4 border-yellow-500 rounded-full">
         <div
-          ref={wheelRef}
-          className="w-full h-full rounded-full border-8 border-gray-700 flex items-center justify-center relative bg-gradient-to-tr from-purple-700 via-purple-900 to-purple-700"
+          className="absolute w-full h-full transition-transform duration-3000 ease-out"
+          style={{ transform: `rotate(${angle}deg)` }}
         >
-          {/* Sectors */}
-          {sectors.map((s, i) => {
-            const rotate = (360 / sectors.length) * i;
-            return (
-              <div
-                key={i}
-                className="absolute w-1/2 h-1/2 origin-bottom-left flex items-center justify-center"
-                style={{ transform: `rotate(${rotate}deg)` }}
-              >
-                <span className="text-white font-bold">{s}</span>
-              </div>
-            );
-          })}
+          {sectors.map((sec, idx) => (
+            <div
+              key={idx}
+              className="absolute w-1/2 h-1/2 origin-bottom-left bg-gradient-to-r from-red-500 to-yellow-500 text-white flex items-center justify-center"
+              style={{
+                transform: `rotate(${(360 / sectors.length) * idx}deg)`,
+                transformOrigin: "100% 100%",
+              }}
+            >
+              {sec}
+            </div>
+          ))}
         </div>
-        {/* Pointer */}
-        <div className="absolute top-[-10px] left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-8 border-r-8 border-b-16 border-b-red-600"></div>
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4 h-12 bg-red-600"></div>
       </div>
-
       <button
         onClick={handleSpin}
-        disabled={isSpinning || spinsLeft <= 0}
-        className="mt-6 px-6 py-2 bg-blue-600 hover:bg-blue-700 rounded text-white font-bold disabled:opacity-50"
+        className="mt-4 px-6 py-2 bg-yellow-500 text-gray-900 font-bold rounded"
       >
-        {isSpinning ? "Spinning..." : "Spin"}
+        Spin
       </button>
-
-      <p className="mt-4">
-        Spins left: <span className="font-bold">{spinsLeft}</span>
-      </p>
-
-      {result && (
-        <p className="mt-2 text-lg">
-          Last spin result: <span className="font-bold">{result}</span>
-        </p>
-      )}
+      {result && <p className="mt-2 text-xl font-bold">{result}</p>}
     </div>
   );
 };
-
-export default GameWheel;
