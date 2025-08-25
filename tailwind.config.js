@@ -5,21 +5,21 @@ module.exports = {
     extend: {
       colors: {
         cream: "#fdf6e3",
-        "glassy-red": "rgba(220,38,38,0.85)", // red-600 with transparency
+        "glassy-red": "rgba(220,38,38,0.85)",
 
         // App brand colors
-        primary: "#1E293B",   // slate-800 (dark header/footer)
-        secondary: "#0F172A", // slate-900
-        accent: "#FACC15",    // yellow-400 (for highlights)
-        success: "#22C55E",   // green-500
-        warning: "#F97316",   // orange-500
-        danger: "#DC2626",    // red-600
-        muted: "#94A3B8",     // slate-400 (for subtle text)
+        primary: "#1E293B",
+        secondary: "#0F172A",
+        accent: "#FACC15",
+        success: "#22C55E",
+        warning: "#F97316",
+        danger: "#DC2626",
+        muted: "#94A3B8",
 
         // Background levels
-        bgLight: "#F8FAFC",   // light neutral
-        bgDark: "#0F172A",    // very dark
-        card: "rgba(255,255,255,0.9)", // frosted glass card look
+        bgLight: "#F8FAFC",
+        bgDark: "#0F172A",
+        card: "rgba(255,255,255,0.9)",
       },
       borderRadius: {
         xl: "1rem",
@@ -46,5 +46,7 @@ module.exports = {
       },
     },
   },
-  plugins: [],
+  plugins: [
+    require("@tailwindcss/forms"), // 👈 ensures all inputs/textareas look clean
+  ],
 };
