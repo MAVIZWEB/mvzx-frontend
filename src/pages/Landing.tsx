@@ -1,106 +1,217 @@
- import React from "react";
+ // src/pages/Landing.tsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import {
+  Menu, User, Wallet, Trophy, Crown, Sparkles,
+  Coins, Gift, Cpu, Handshake, Vote, Building,
+  Volume2, VolumeX
+} from "lucide-react";
+import { api, loadAuth, isAuthenticated } from "../services/api";
+import Button from "../components/UI/Button";
+import Card from "../components/UI/Card";
+import Badge from "../components/UI/Badge";
+import AuthModal from "../components/AuthModal";
 
-export default function Landing() {
+/* ---------------- Leaderboard ---------------- */
+function LeaderboardGlass() {
+  const [rows, setRows] = useState<{ user: string; prize: string; ts: string }[]>([
+    { user: "Edu", prize: "20 MVZx", ts: "2m ago" },
+    { user: "Isa", prize: "10 MVZx", ts: "5m ago" },
+    { user: "Ike", prize: "50 MVZx", ts: "12m ago" },
+    { user: "Ayo", prize: "5 MVZx", ts: "18m ago" },
+  ]);
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await api.getLeaderboard?.();
+        if (mounted && Array.isArray(res?.items)) {
+          setRows(
+            res.items.slice(0, 6).map((r: any) => ({
+              user: String(r.user ?? "User"),
+              prize: String(r.prize ?? "—"),
+              ts: String(r.ts ?? ""),
+            }))
+          );
+        }
+      } catch {}
+    })();
+    return () => { mounted = false; };
+  }, []);
+
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <Card className="bg-white/10 backdrop-blur-md border-white/10 p-3">
+      <div className="flex items-center gap-2 mb-2">
+        <Trophy className="w-4 h-4 text-yellow-400" />
+        <p className="text-xs font-semibold tracking-wide">Recent Wins</p>
+      </div>
+      <div className="max-h-20 overflow-auto pr-1">
+        {rows.map((r, i) => (
+          <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-white/5 last:border-b-0">
+            <span className="truncate">{r.user}</span>
+            <span className="font-semibold">{r.prize}</span>
+            <span className="text-[11px] opacity-80">{r.ts}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+/* ---------------- Landing Page ---------------- */
+export default function LandingPage() {
+  const navigate = useNavigate();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [userLoggedIn, setUserLoggedIn] = useState(isAuthenticated());
+  const [badge, setBadge] = useState("Bronze");
+  const [wins, setWins] = useState(0);
+  const [wallet, setWallet] = useState(0);
+
+  // Spin state
+  const [spinning, setSpinning] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [result, setResult] = useState<string | null>(null);
+
+  // Free spins (demo)
+  const [freeSpins, setFreeSpins] = useState<number>(() => {
+    const s = localStorage.getItem("mvzx_free_spins");
+    return s ? Math.max(0, parseInt(s)) : 3;
+  });
+
+  // Sound
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [muted, setMuted] = useState(false);
+
+  // Prize map
+  const prizes = useMemo(() => [
+    { label: "0.125 MVZx", color: "#fbbf24", isLose: false }, 
+    { label: "0.25 MVZx",  color: "#f97316", isLose: false }, 
+    { label: "Try Again",  color: "#6b7280", isLose: true  }, 
+    { label: "0.5 MVZx",   color: "#3b82f6", isLose: false }, 
+    { label: "0.75 MVZx",  color: "#8b5cf6", isLose: false }, 
+    { label: "3 MVZx 🎉",  color: "#22c55e", isLose: false }, 
+  ], []);
+
+  /* ---------------- Sound ---------------- */
+  const beepFallback = () => {
+    try {
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      const ctx = new Ctx();
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "triangle"; o.frequency.value = 880;
+      o.connect(g); g.connect(ctx.destination);
+      const t = ctx.currentTime;
+      g.gain.setValueAtTime(0.001, t);
+      g.gain.exponentialRampToValueAtTime(0.2, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.3);
+      o.start(); o.stop(t + 0.32);
+    } catch {}
+  };
+
+  const playWinSound = () => {
+    if (muted) return;
+    const el = audioRef.current;
+    if (el) {
+      try { el.currentTime = 0; el.play().catch(beepFallback); } catch { beepFallback(); }
+    } else { beepFallback(); }
+  };
+
+  /* ---------------- Spin ---------------- */
+  const spin = async () => {
+    if (spinning) return;
+    setSpinning(true);
+    setResult(null);
+
+    let prizeIndex = Math.floor(Math.random() * prizes.length);
+    setRotation(rotation + 360 * 4 + prizeIndex * (360 / prizes.length));
+
+    window.setTimeout(() => {
+      const chosen = prizes[prizeIndex];
+      setSpinning(false);
+
+      if (chosen.isLose) {
+        setResult("Try again 🎯");
+      } else {
+        setResult(`🎉 You won ${chosen.label}`);
+        playWinSound();
+        setWins((w) => w + 1);
+      }
+    }, 4200);
+  };
+
+  return (
+    <div className="min-h-screen w-full text-white flex flex-col"
+      style={{ background: "linear-gradient(135deg, #3a0006 0%, #1a0020 50%, #000524 100%)" }}>
+      
       {/* Header */}
-      <header className="w-full bg-black text-white py-4 shadow-md">
-        <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Black Escrow</h1>
-          <nav className="space-x-6">
-            <a href="#features" className="hover:underline">Features</a>
-            <a href="#escrow" className="hover:underline">Escrow</a>
-            <a href="#contact" className="hover:underline">Contact</a>
-          </nav>
+      <header className="sticky top-0 z-30 bg-[#FFD700] border-b border-yellow-300">
+        <div className="flex items-center justify-between px-4 pt-3">
+          <h1 className="text-[15px] font-extrabold text-gray-900">MAVIZ SWAPS</h1>
+          <Button
+            onClick={() => (userLoggedIn ? navigate("/dashboard") : setIsAuthModalOpen(true))}
+            className="px-3 py-1 text-xs rounded-full bg-purple-700 text-white"
+          >
+            {userLoggedIn ? "Dashboard" : "Sign Up"}
+          </Button>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="flex-1 flex items-center justify-center bg-gray-50 px-6 py-16 text-center">
-        <div className="max-w-3xl">
-          <h2 className="text-4xl font-extrabold text-gray-900 mb-4">
-            Secure & Reliable Escrow Platform
-          </h2>
-          <p className="text-lg text-gray-600 mb-6">
-            Trade confidently with our blockchain-powered escrow services.
-          </p>
-          <a
-            href="#escrow"
-            className="bg-black text-white px-6 py-3 rounded-lg text-lg font-medium hover:bg-gray-900 transition"
-          >
-            Start an Escrow
-          </a>
+      {/* Main */}
+      <main className="flex-1 px-3 pb-3 overflow-auto">
+        {/* Spin Section */}
+        <Card className="mt-3 p-3 bg-white/10 border border-white/15">
+          <LeaderboardGlass />
+          <div className="flex justify-center mt-4">
+            <Button onClick={spin} disabled={spinning} className="bg-yellow-500 hover:bg-yellow-600 px-6 py-2 rounded-lg">
+              {spinning ? "Spinning..." : "SPIN NOW"}
+            </Button>
+            <button onClick={() => setMuted((m) => !m)} className="ml-2 p-2 bg-white/10 rounded-lg">
+              {muted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            </button>
+          </div>
+          {result && <p className="mt-3 text-center font-semibold">{result}</p>}
+        </Card>
+
+        {/* Feature Buttons */}
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          {[
+            { to: "/buy", labels: ["Buy MVZx"], bg: "#16a34a", icon: Coins },
+            { to: "/airdrop", labels: ["Airdrop"], bg: "#db2777", icon: Gift },
+            { to: "/mining", labels: ["Mining"], bg: "#ca8a04", icon: Cpu },
+            { to: "/directbuy", labels: ["Direct Transfer"], bg: "#2563eb", icon: Building },
+            { to: "/escrow", labels: ["Escrow"], bg: "#4338ca", icon: Handshake },
+            { to: "/voting", labels: ["Voting"], bg: "#15803d", icon: Vote },
+          ].map((b, i) => (
+            <Link key={i} to={b.to}>
+              <Button className="w-full h-12 flex flex-col justify-center items-center text-[11px] font-semibold"
+                style={{ backgroundColor: b.bg }}>
+                <b.icon className="w-4 h-4 mb-1" />
+                {b.labels.map((l, j) => <span key={j}>{l}</span>)}
+              </Button>
+            </Link>
+          ))}
         </div>
-      </section>
-
-      {/* Escrow Form */}
-      <section id="escrow" className="bg-white py-16 px-6">
-        <div className="max-w-2xl mx-auto">
-          <h3 className="text-2xl font-semibold text-gray-800 mb-6 text-center">
-            Escrow Form
-          </h3>
-
-          <form className="space-y-4 bg-white p-6 rounded-2xl shadow-md border border-gray-200">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Buyer Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter buyer name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Seller Name
-              </label>
-              <input
-                type="text"
-                placeholder="Enter seller name"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Amount
-              </label>
-              <input
-                type="number"
-                placeholder="Enter amount"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-black"
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                className="flex-1 bg-black text-white py-2 px-4 rounded-lg hover:bg-gray-900 transition"
-              >
-                Submit Escrow
-              </button>
-              <button
-                type="button"
-                className="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-lg hover:bg-gray-300 transition"
-              >
-                Direct Transfer Buy
-              </button>
-            </div>
-          </form>
-        </div>
-      </section>
+      </main>
 
       {/* Footer */}
-      <footer
-        id="contact"
-        className="w-full bg-black text-white text-center py-6 mt-auto"
-      >
-        <p className="text-sm">
-          © {new Date().getFullYear()} Black Escrow. All rights reserved.
-        </p>
+      <footer className="px-4 py-3 text-[11px] text-white/70 text-center">
+        &copy; {new Date().getFullYear()} MAVIZ. All rights reserved.
       </footer>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={() => {
+          setUserLoggedIn(true);
+          try { loadAuth(); } catch {}
+        }}
+      />
+
+      {/* Win SFX */}
+      <audio ref={audioRef} src="/sounds/win.mp3" preload="auto" />
     </div>
   );
 }
