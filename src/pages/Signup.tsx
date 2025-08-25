@@ -1,56 +1,86 @@
- import React, { useState } from "react";
-import { signup } from "../api/user";
+ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 
-export const Signup: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [pin, setPin] = useState("");
-  const [confirmPin, setConfirmPin] = useState("");
+export default function Signup() {
   const navigate = useNavigate();
+  const [form, setForm] = useState({
+    username: "",
+    email: "",
+    password: "",
+  });
 
-  const handleSignup = async () => {
-    if (pin !== confirmPin) return alert("PINs do not match");
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
     try {
-      await signup(email, pin, confirmPin);
-      alert("Signup successful!");
-      navigate("/login");
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Error signing up");
+      const res = await fetch("http://localhost:4000/api/user/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
+
+      if (res.ok) {
+        toast.success("Signup successful!");
+        navigate("/login");
+      } else {
+        toast.error("Signup failed.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Server error");
     }
   };
 
   return (
-    <div className="max-w-md mx-auto mt-24 p-6 bg-gray-800 rounded">
-      <h2 className="text-2xl mb-4">Signup</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        className="w-full mb-2 p-2 rounded"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <input
-        type="password"
-        placeholder="4-digit PIN"
-        className="w-full mb-2 p-2 rounded"
-        value={pin}
-        onChange={(e) => setPin(e.target.value)}
-        maxLength={4}
-      />
-      <input
-        type="password"
-        placeholder="Confirm PIN"
-        className="w-full mb-2 p-2 rounded"
-        value={confirmPin}
-        onChange={(e) => setConfirmPin(e.target.value)}
-        maxLength={4}
-      />
-      <button
-        onClick={handleSignup}
-        className="w-full mt-2 p-2 bg-yellow-500 text-gray-900 font-bold rounded"
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <form
+        onSubmit={handleSubmit}
+        className="bg-white shadow-md rounded-lg p-8 w-96"
       >
-        Signup
-      </button>
+        <h2 className="text-2xl font-bold text-center mb-6">Signup</h2>
+
+        <input
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={form.username}
+          onChange={handleChange}
+          className="w-full mb-4 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          className="w-full mb-4 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <input
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          className="w-full mb-6 px-3 py-2 border rounded-lg"
+          required
+        />
+
+        <button
+          type="submit"
+          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+        >
+          Signup
+        </button>
+      </form>
     </div>
   );
-};
+}
