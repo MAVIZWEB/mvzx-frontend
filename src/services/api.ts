@@ -1,53 +1,67 @@
- const API_URL = "https://your-backend.onrender.com"; // change to your backend URL
+ // frontend/src/services/api.ts
+import axios from "axios";
 
-export async function signup(data: { email?: string; pinHash: string; wallet: string }) {
-  try {
-    const res = await fetch(`${API_URL}/signup`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return await res.json();
-  } catch (err) {
-    return { error: "Network error" };
-  }
+const BASE = "https://mvzx-backend.onrender.com"; // ⬅️ your backend (baked in)
+
+const apiClient = axios.create({
+  baseURL: BASE,
+  headers: { "Content-Type": "application/json" },
+});
+
+// attach token automatically if present
+apiClient.interceptors.request.use((cfg) => {
+  const token = localStorage.getItem("token");
+  if (token) cfg.headers = { ...cfg.headers, Authorization: `Bearer ${token}` };
+  return cfg;
+});
+
+// ---- Auth ----
+export const signup = (email: string | undefined, pin: string, ref?: string) =>
+  apiClient.post("/auth/signup", { email, pin, ref });
+
+export const login = (email: string | undefined, pin: string) =>
+  apiClient.post("/auth/login", { email, pin });
+
+// ---- Purchase ----
+// Flutterwave initialize
+export const purchaseFlutterwaveInit = (amountNGN: number) =>
+  apiClient.post("/purchase/flw/init", { amountNGN });
+
+// Flutterwave verify
+export const purchaseFlutterwaveVerify = (txId: string) =>
+  apiClient.post("/purchase/flw/verify", { txId });
+
+// Bank deposit (create pending)
+export const purchaseBank = (amountNGN: number) =>
+  apiClient.post("/purchase/bank", { amountNGN });
+
+// USDT purchase
+export const purchaseUSDT = (amountUSDT: number) =>
+  apiClient.post("/purchase/usdt", { amountUSDT });
+
+// ---- Stake ----
+export const stakeCreate = (amountMVZX: number) =>
+  apiClient.post("/stake/create", { amountMVZX });
+
+export const stakeClaim = (stakeId: number) =>
+  apiClient.post("/stake/claim", { stakeId });
+
+// ---- Withdraw ----
+export const requestWithdrawal = (payload: {
+  amountMVZX: number;
+  method: "BANK" | "USDT";
+  bankName?: string;
+  bankAccount?: string;
+  usdtAddress?: string;
+}) => apiClient.post("/withdrawal/request", payload);
+
+// ---- Matrix ----
+export const getMatrix = (userId: number) => apiClient.get(`/matrix/${userId}`);
+
+// ---- Helper: get current user info from storage (populated after signup/login) ----
+export function getLocalUser() {
+  const u = localStorage.getItem("mvzx_user");
+  return u ? JSON.parse(u) : null;
 }
 
-export async function purchase(data: { userId: number; amountNGN: number; method: string }) {
-  try {
-    const res = await fetch(`${API_URL}/purchase`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return await res.json();
-  } catch (err) {
-    return { error: "Network error" };
-  }
-}
-
-export async function stake(data: { userId: number; amount: number }) {
-  try {
-    const res = await fetch(`${API_URL}/stake`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return await res.json();
-  } catch (err) {
-    return { error: "Network error" };
-  }
-}
-
-export async function withdraw(data: { userId: number; amountMVZX: number; method: string }) {
-  try {
-    const res = await fetch(`${API_URL}/withdraw`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    return await res.json();
-  } catch (err) {
-    return { error: "Network error" };
-  }
-}
+export default apiClient;
