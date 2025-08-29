@@ -1,7 +1,7 @@
-export default function Footer() {
+ export default function Footer(){
   return (
-    <footer className="p-4 bg-gray-200 text-center">
-      &copy; 2025 MAVIZ
+    <footer style={{padding:12, background:'#f3f4f6', color:'#111', textAlign:'center'}}>
+      © {new Date().getFullYear()} MVZx
     </footer>
   );
 }
