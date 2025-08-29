@@ -1,31 +1,25 @@
- import React from "react";
-import { Outlet, Link } from "react-router-dom";
+ // frontend/src/App.tsx
+import React from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+import Home from "./pages/Home";
+import Purchase from "./pages/Purchase";
+import StakePage from "./pages/Stake";
 
 export default function App() {
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Navbar */}
-      <nav className="bg-blue-600 text-white p-4 flex justify-between">
-        <h1 className="text-lg font-bold">MVZX Platform</h1>
-        <div className="space-x-4">
-          <Link to="/" className="hover:underline">Home</Link>
-          <Link to="/dashboard" className="hover:underline">Dashboard</Link>
-          <Link to="/purchase" className="hover:underline">Purchase</Link>
-          <Link to="/stake" className="hover:underline">Stake</Link>
-          <Link to="/withdraw" className="hover:underline">Withdraw</Link>
-          <Link to="/referral" className="hover:underline">Referral</Link>
-        </div>
-      </nav>
-
-      {/* Page Content */}
-      <main className="flex-grow p-6">
-        <Outlet />
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-gray-800 text-gray-300 p-4 text-center">
-        © {new Date().getFullYear()} MVZX. All rights reserved.
-      </footer>
-    </div>
+    <BrowserRouter>
+      <div className="p-4">
+        <nav className="mb-4">
+          <Link to="/" className="mr-4">Home</Link>
+          <Link to="/purchase" className="mr-4">Purchase</Link>
+          <Link to="/stake">Stake</Link>
+        </nav>
+        <Routes>
+          <Route path="/" element={<Home/>} />
+          <Route path="/purchase" element={<Purchase/>} />
+          <Route path="/stake" element={<StakePage/>} />
+        </Routes>
+      </div>
+    </BrowserRouter>
   );
 }
