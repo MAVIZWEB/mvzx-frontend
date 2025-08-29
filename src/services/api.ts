@@ -1,67 +1,52 @@
  // frontend/src/services/api.ts
 import axios from "axios";
 
-const BASE = "https://mvzx-backend.onrender.com"; // ⬅️ your backend (baked in)
+const API_BASE = process.env.REACT_APP_API_BASE || "https://mvzx-backend.onrender.com";
 
-const apiClient = axios.create({
-  baseURL: BASE,
+const api = axios.create({
+  baseURL: API_BASE + "/api",
   headers: { "Content-Type": "application/json" },
 });
 
-// attach token automatically if present
-apiClient.interceptors.request.use((cfg) => {
+// attach token
+api.interceptors.request.use((cfg) => {
   const token = localStorage.getItem("token");
-  if (token) cfg.headers = { ...cfg.headers, Authorization: `Bearer ${token}` };
+  if (token && cfg.headers) cfg.headers.Authorization = `Bearer ${token}`;
   return cfg;
 });
 
-// ---- Auth ----
-export const signup = (email: string | undefined, pin: string, ref?: string) =>
-  apiClient.post("/auth/signup", { email, pin, ref });
-
-export const login = (email: string | undefined, pin: string) =>
-  apiClient.post("/auth/login", { email, pin });
-
-// ---- Purchase ----
-// Flutterwave initialize
-export const purchaseFlutterwaveInit = (amountNGN: number) =>
-  apiClient.post("/purchase/flw/init", { amountNGN });
-
-// Flutterwave verify
-export const purchaseFlutterwaveVerify = (txId: string) =>
-  apiClient.post("/purchase/flw/verify", { txId });
-
-// Bank deposit (create pending)
-export const purchaseBank = (amountNGN: number) =>
-  apiClient.post("/purchase/bank", { amountNGN });
-
-// USDT purchase
-export const purchaseUSDT = (amountUSDT: number) =>
-  apiClient.post("/purchase/usdt", { amountUSDT });
-
-// ---- Stake ----
-export const stakeCreate = (amountMVZX: number) =>
-  apiClient.post("/stake/create", { amountMVZX });
-
-export const stakeClaim = (stakeId: number) =>
-  apiClient.post("/stake/claim", { stakeId });
-
-// ---- Withdraw ----
-export const requestWithdrawal = (payload: {
-  amountMVZX: number;
-  method: "BANK" | "USDT";
-  bankName?: string;
-  bankAccount?: string;
-  usdtAddress?: string;
-}) => apiClient.post("/withdrawal/request", payload);
-
-// ---- Matrix ----
-export const getMatrix = (userId: number) => apiClient.get(`/matrix/${userId}`);
-
-// ---- Helper: get current user info from storage (populated after signup/login) ----
-export function getLocalUser() {
-  const u = localStorage.getItem("mvzx_user");
-  return u ? JSON.parse(u) : null;
+// auth helpers
+export function signup(email?: string, pin?: string, ref?: string) {
+  return api.post("/auth/signup", { email, pin, ref });
+}
+export function login(email?: string, pin?: string) {
+  return api.post("/auth/login", { email, pin });
 }
 
-export default apiClient;
+// stake
+export function createStake(amount: number) {
+  return api.post("/stake", { amount });
+}
+export function claimStake(stakeId: number) {
+  return api.post("/stake/claim", { stakeId });
+}
+
+// purchase
+export function purchase(amountNGN: number, method: "USDT"|"FLW"|"BANK", txHash?: string) {
+  return api.post("/purchase", { amountNGN, method, txHash });
+}
+
+// user read
+export function getProfile() {
+  return api.get("/auth/me");
+}
+
+// admin (example)
+export function adminApproveBank(purchaseId: number) {
+  return api.post("/admin/approve-bank", { purchaseId });
+}
+export function adminPayMatrix(matrixId: number) {
+  return api.post("/admin/pay-matrix-lumpsum", { matrixId });
+}
+
+export default api;
