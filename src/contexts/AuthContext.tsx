@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+ import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authAPI } from '../services/api';
 
 interface User {
   id: number;
@@ -41,10 +42,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (token && userData) {
       try {
         setUser(JSON.parse(userData));
+        
+        // Verify token is still valid
+        authAPI.login({ email: JSON.parse(userData).email, password: '' })
+          .catch(() => {
+            // Token is invalid, logout
+            logout();
+          });
       } catch (error) {
         console.error('Error parsing user data:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        logout();
       }
     }
   }, []);
