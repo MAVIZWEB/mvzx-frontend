@@ -1,21 +1,27 @@
- import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authAPI } from '../services/api';
+ import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 interface User {
   id: number;
   email: string;
-  phone: string;
-  wallet: {
-    address: string;
-    balance: number;
-  };
+  fullName: string;
+  referralCode: string;
+}
+
+interface Wallet {
+  id: number;
+  mvzx: number;
+  usdt: number;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (token: string, user: User) => void;
+  wallet: Wallet | null;
+  token: string | null;
+  login: (email: string, pin: string) => Promise<void>;
+  register: (userData: any) => Promise<void>;
   logout: () => void;
-  isAuthenticated: boolean;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,51 +34,90 @@ export const useAuth = () => {
   return context;
 };
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
-    
-    if (token && userData) {
-      try {
-        setUser(JSON.parse(userData));
-        
-        // Verify token is still valid
-        authAPI.login({ email: JSON.parse(userData).email, password: '' })
-          .catch(() => {
-            // Token is invalid, logout
-            logout();
-          });
-      } catch (error) {
-        console.error('Error parsing user data:', error);
-        logout();
-      }
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      fetchUserData();
+    } else {
+      setLoading(false);
     }
-  }, []);
+  }, [token]);
 
-  const login = (token: string, userData: User) => {
-    localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(userData));
-    setUser(userData);
+  const fetchUserData = async () => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`);
+      setUser(response.data.data.user);
+      setWallet(response.data.data.wallet);
+    } catch (error) {
+      console.error('Failed to fetch user data:', error);
+      logout();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email: string, pin: string) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, {
+        email,
+        pin
+      });
+
+      const { data } = response.data;
+      setToken(data.token);
+      setUser(data.user);
+      setWallet(data.wallet);
+      
+      localStorage.setItem('token', data.token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
+  };
+
+  const register = async (userData: any) => {
+    try {
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/signup`, userData);
+      
+      const { data } = response.data;
+      setToken(data.token);
+      setUser(data.user);
+      
+      localStorage.setItem('token', data.token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
+      
+      // Save wallet private key securely (in practice, this should be handled more securely)
+      if (data.wallet.privateKey) {
+        localStorage.setItem('walletPK', data.wallet.privateKey);
+      }
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
+    }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
     setUser(null);
+    setWallet(null);
+    setToken(null);
+    localStorage.removeItem('token');
+    localStorage.removeItem('walletPK');
+    delete axios.defaults.headers.common['Authorization'];
   };
 
   const value = {
     user,
+    wallet,
+    token,
     login,
+    register,
     logout,
-    isAuthenticated: !!user,
+    loading
   };
 
   return (
