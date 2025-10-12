@@ -1,65 +1,95 @@
-// src/api.js
-import axios from "axios";
+import axios from 'axios';
 
-// Use environment variable for backend base URL
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://mvzx-backend.onrender.com';
 
-// Axios instance
-const api = axios.create({
-  baseURL: API_URL,
-  headers: { "Content-Type": "application/json" },
-});
+// === User Authentication ===
 
-// ------------------ AUTH ------------------
-export const registerUser = async (data) => {
-  const res = await api.post("/api/auth/register", data);
-  return res.data;
+// Register new user
+export const registerUser = async (userData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/users/register`, userData);
+    return response.data;
+  } catch (error) {
+    console.error('Register error:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
-export const loginUser = async (data) => {
-  const res = await api.post("/api/auth/login", data);
-  return res.data;
+// Login user
+export const loginUser = async (credentials) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/users/login`, credentials);
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
-// ------------------ DASHBOARD / USER ------------------
+// Get user profile (requires token)
 export const getUserProfile = async (token) => {
-  const res = await api.get("/api/user/profile", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
-};
-
-// ------------------ STAKING ------------------
-export const stakeTokens = async (data, token) => {
-  const res = await api.post("/api/staking/stake", data, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
-};
-
-// ------------------ REFERRALS ------------------
-export const getReferrals = async (token) => {
-  const res = await api.get("/api/referrals", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return res.data;
-};
-
-// ------------------ ADMIN ------------------
-export const admin = {
-  getAllUsers: async (token) => {
-    const res = await api.get("/api/admin/users", {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/users/profile`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.data;
-  },
-
-  getAllTransactions: async (token) => {
-    const res = await api.get("/api/admin/transactions", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.data;
-  },
+    return response.data;
+  } catch (error) {
+    console.error('Profile error:', error.response?.data || error.message);
+    throw error;
+  }
 };
 
-export default api;
+// === Deposit Handling ===
+export const createDeposit = async (depositData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/deposit`, depositData);
+    return response.data;
+  } catch (error) {
+    console.error('Deposit error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// === Withdrawal Handling ===
+export const createWithdrawal = async (withdrawalData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/withdrawal`, withdrawalData);
+    return response.data;
+  } catch (error) {
+    console.error('Withdrawal error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// === Staking ===
+export const createStake = async (stakeData) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/api/stake`, stakeData);
+    return response.data;
+  } catch (error) {
+    console.error('Stake error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// === Referral ===
+export const getReferralData = async (userId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/referrals/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Referral error:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+// === Transactions List ===
+export const getTransactions = async (userId) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/transactions/${userId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Transactions error:', error.response?.data || error.message);
+    throw error;
+  }
+};
