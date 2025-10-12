@@ -44,7 +44,14 @@ export const verifyFlutterwavePayment = async (transactionId) => {
   return res.data;
 };
 
+// manual deposit for local/bank transfer
 export const createManualDeposit = async (depositData) => {
+  const res = await api.post('/payments/manual', depositData);
+  return res.data;
+};
+
+// ✅ alias for compatibility with older frontend code
+export const createDeposit = async (depositData) => {
   const res = await api.post('/payments/manual', depositData);
   return res.data;
 };
