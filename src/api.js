@@ -1,96 +1,78 @@
-// frontend/src/api.js
-
-import axios from "axios";
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://mvzx-backend.onrender.com";
+// src/api.js
+import axios from 'axios';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: { "Content-Type": "application/json" },
+  baseURL: process.env.REACT_APP_API_URL || 'https://mvzx-backend.onrender.com',
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// ==============================
-// AUTHENTICATION
-// ==============================
-
-// Register a new user
-export const registerUser = async (formData) => {
-  const response = await api.post("/auth/register", formData);
-  return response.data;
+// ✅ AUTH ENDPOINTS
+export const register = async (userData) => {
+  const res = await api.post('/auth/register', userData);
+  return res.data;
 };
 
-// Login user
-export const loginUser = async (formData) => {
-  const response = await api.post("/auth/login", formData);
-  return response.data;
+export const login = async (credentials) => {
+  const res = await api.post('/auth/login', credentials);
+  return res.data;
 };
 
-// Fetch logged-in user profile
-export const getUserProfile = async (token) => {
-  const response = await api.get("/auth/profile", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return response.data;
-};
-
-// ==============================
-// WALLET & PAYMENTS
-// ==============================
-
-// Fetch user wallet balance & transactions
+// ✅ WALLET ENDPOINTS
 export const fetchWallet = async (userId) => {
-  const response = await api.get(`/wallet/${userId}`);
-  return response.data;
+  const res = await api.get(`/wallet/${userId}`);
+  return res.data;
 };
 
-// Initialize Flutterwave payment
+// ✅ PAYMENT ENDPOINTS
 export const initFlutterwavePayment = async (paymentData) => {
-  const response = await api.post("/payments/flutterwave/init", paymentData);
-  return response.data;
+  const res = await api.post('/payments/flutterwave/init', paymentData);
+  return res.data;
 };
 
-// Confirm payment status
-export const verifyPayment = async (transactionId) => {
-  const response = await api.get(`/payments/verify/${transactionId}`);
-  return response.data;
+// ✅ TOKEN ENDPOINTS
+export const buyToken = async (data) => {
+  const res = await api.post('/token/buy', data);
+  return res.data;
 };
 
-// ==============================
-// TOKEN PURCHASES / TRADING
-// ==============================
-
-// Buy tokens
-export const buyToken = async (purchaseData) => {
-  const response = await api.post("/token/buy", purchaseData);
-  return response.data;
+export const sellToken = async (data) => {
+  const res = await api.post('/token/sell', data);
+  return res.data;
 };
 
-// Fetch token price info
-export const getTokenPrice = async () => {
-  const response = await api.get("/token/price");
-  return response.data;
+// ✅ STAKING ENDPOINTS
+export const stakeTokens = async (data) => {
+  const res = await api.post('/stake', data);
+  return res.data;
 };
 
-// ==============================
-// REFERRALS & STAKING
-// ==============================
+export const getStakes = async (userId) => {
+  const res = await api.get(`/stake/${userId}`);
+  return res.data;
+};
 
-// Fetch referral stats
+// ✅ REFERRAL ENDPOINTS
 export const getReferralData = async (userId) => {
-  const response = await api.get(`/referrals/${userId}`);
-  return response.data;
+  const res = await api.get(`/referrals/${userId}`);
+  return res.data;
 };
 
-// Fetch staking rewards or stats
-export const getStakingInfo = async (userId) => {
-  const response = await api.get(`/staking/${userId}`);
-  return response.data;
+// ✅ ADMIN DASHBOARD ENDPOINT (Added to fix your build)
+export const admin = {
+  async getUsers() {
+    const res = await api.get('/admin/users');
+    return res.data;
+  },
+  async getTransactions() {
+    const res = await api.get('/admin/transactions');
+    return res.data;
+  },
+  async getStats() {
+    const res = await api.get('/admin/stats');
+    return res.data;
+  },
 };
 
-// ==============================
-// EXPORTS
-// ==============================
-export {
-  api,
-};
+// ✅ DEFAULT EXPORT (optional use)
+export default api;
