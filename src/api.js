@@ -1,31 +1,71 @@
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:4000/api';
+const API_URL = "https://mvzx-backend.onrender.com";
 
-async function request(path, opts = {}) {
-  const token = localStorage.getItem('mvzx_token');
-  const headers = opts.headers || {};
-  headers['Content-Type'] = 'application/json';
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}${path}`, { ...opts, headers });
+// ===== AUTH =====
+export async function registerUser(data) {
+  const res = await fetch(`${API_URL}/api/auth/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Registration failed");
   return res.json();
 }
 
-export const auth = {
-  register: (payload) => request('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
-  login: (payload) => request('/auth/login', { method: 'POST', body: JSON.stringify(payload) })
-};
+export async function loginUser(data) {
+  const res = await fetch(`${API_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Invalid credentials");
+  return res.json();
+}
 
-export const wallet = {
-  create: (pin) => request('/wallet/create', { method: 'POST', body: JSON.stringify({ pin }) }),
-  me: () => request('/wallet')
-};
+// ===== WALLET =====
+export async function fetchWallet(token) {
+  const res = await fetch(`${API_URL}/api/wallet`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!res.ok) throw new Error("Failed to load wallet");
+  return res.json();
+}
 
-export const deposit = {
-  bankManual: (payload) => request('/deposit/bank/manual', { method: 'POST', body: JSON.stringify(payload) }),
-  flutterInit: (payload) => request('/deposit/flutterwave/init', { method: 'POST', body: JSON.stringify(payload) })
-};
+export async function createWallet(pin, token) {
+  const res = await fetch(`${API_URL}/api/wallet/create`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ pin }),
+  });
+  if (!res.ok) throw new Error("Failed to create wallet");
+  return res.json();
+}
 
-export const admin = {
-  pending: () => request('/admin/deposits/pending'),
-  approve: (id) => request(`/admin/deposits/${id}/approve`, { method: 'POST' }),
-  reject: (id, reason) => request(`/admin/deposits/${id}/reject`, { method: 'POST', body: JSON.stringify({ reason }) })
-};
+// ===== DEPOSIT =====
+export async function createDeposit(data, token) {
+  const res = await fetch(`${API_URL}/api/deposit`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Deposit failed");
+  return res.json();
+}
+
+export async function initFlutterwavePayment(amount, currency, email, token) {
+  const res = await fetch(`${API_URL}/api/deposit/flutterwave`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ amount, currency, email }),
+  });
+  if (!res.ok) throw new Error("Flutterwave payment failed");
+  return res.json();
+}
