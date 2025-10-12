@@ -93,3 +93,39 @@ export const getTransactions = async (userId) => {
     throw error;
   }
 };
+
+// === Admin Controls ===
+export const admin = {
+  // Fetch all pending deposits
+  getPendingDeposits: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/admin/deposits/pending`);
+      return response.data;
+    } catch (error) {
+      console.error('Admin pending deposits error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Approve a deposit manually
+  approveDeposit: async (depositId) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/admin/deposits/${depositId}/approve`);
+      return response.data;
+    } catch (error) {
+      console.error('Approve deposit error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+
+  // Reject a deposit
+  rejectDeposit: async (depositId) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/api/admin/deposits/${depositId}/reject`);
+      return response.data;
+    } catch (error) {
+      console.error('Reject deposit error:', error.response?.data || error.message);
+      throw error;
+    }
+  },
+};
