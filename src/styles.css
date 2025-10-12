@@ -1,0 +1,6 @@
+body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;padding:20px;background:#f5f7fb}
+.app nav{display:flex;gap:6px;margin-bottom:12px}
+.card{background:white;padding:16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.06);max-width:720px}
+input{display:block;margin:8px 0;padding:8px;width:100%;box-sizing:border-box}
+button{padding:8px 12px;margin-right:8px}
+.item{border-top:1px solid #eee;padding:8px 0}
