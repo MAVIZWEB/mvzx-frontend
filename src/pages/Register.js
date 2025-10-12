@@ -1,25 +1,42 @@
-import React, { useState } from 'react';
-import { auth } from '../api';
+import React, { useState } from "react";
+import { registerUser } from "../api";
 
-export default function Register({ onDone }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [msg, setMsg] = useState('');
+function Register() {
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function submit(e) {
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await auth.register({ email, password });
-    if (res.error) setMsg(res.error);
-    else { setMsg('Registered. Please login.'); onDone && onDone(); }
-  }
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await registerUser(form);
+      setMessage("✅ Registration successful! Please log in.");
+      setForm({ name: "", email: "", password: "" });
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <form onSubmit={submit} className="card">
+    <div className="form-container">
       <h2>Register</h2>
-      <input value={email} onChange={e => setEmail(e.target.value)} placeholder="email" />
-      <input value={password} onChange={e => setPassword(e.target.value)} placeholder="password" type="password" />
-      <button type="submit">Register</button>
-      <div className="msg">{msg}</div>
-    </form>
+      <form onSubmit={handleSubmit}>
+        <input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required />
+        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required />
+        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required />
+        <button type="submit" disabled={loading}>
+          {loading ? "Registering..." : "Register"}
+        </button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
   );
 }
+
+export default Register;
