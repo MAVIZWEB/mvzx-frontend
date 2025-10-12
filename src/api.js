@@ -1,4 +1,4 @@
- // src/api.js
+// src/api.js
 import axios from "axios";
 
 const api = axios.create({
@@ -6,9 +6,9 @@ const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
-//
-// ================= AUTH =================
-//
+/* ============================
+   AUTHENTICATION
+============================ */
 export const register = async (userData) => {
   const res = await api.post("/auth/register", userData);
   return res.data;
@@ -19,20 +19,19 @@ export const login = async (credentials) => {
   return res.data;
 };
 
-// ✅ Aliases for backward compatibility
-export const registerUser = register;
+// Alias for compatibility with existing imports
 export const loginUser = login;
 
-//
-// ================= WALLET =================
-//
-export const fetchWallet = async (userId) => {
-  const res = await api.get(`/wallet/${userId}`);
+/* ============================
+   WALLET
+============================ */
+export const createWallet = async (userId, pin) => {
+  const res = await api.post("/wallet/create", { userId, pin });
   return res.data;
 };
 
-export const createWallet = async (userId, pin) => {
-  const res = await api.post("/wallet/create", { userId, pin });
+export const fetchWallet = async (userId) => {
+  const res = await api.get(`/wallet/${userId}`);
   return res.data;
 };
 
@@ -41,9 +40,9 @@ export const verifyPin = async (userId, pin) => {
   return res.data;
 };
 
-//
-// ================= DEPOSIT / PAYMENT =================
-//
+/* ============================
+   PAYMENTS / DEPOSITS
+============================ */
 export const initFlutterwavePayment = async (paymentData) => {
   const res = await api.post("/payments/flutterwave/init", paymentData);
   return res.data;
@@ -54,13 +53,13 @@ export const verifyFlutterwavePayment = async (transactionId) => {
   return res.data;
 };
 
-// Manual deposit (bank transfer)
+// Manual bank transfer deposits
 export const createManualDeposit = async (depositData) => {
   const res = await api.post("/payments/manual", depositData);
   return res.data;
 };
 
-// ✅ Alias for legacy imports
+// Alias to prevent “createDeposit not exported” build errors
 export const createDeposit = createManualDeposit;
 
 export const getPendingDeposits = async (adminId) => {
@@ -73,9 +72,9 @@ export const approveDeposit = async (depositId) => {
   return res.data;
 };
 
-//
-// ================= TOKEN (BUY/SELL) =================
-//
+/* ============================
+   TOKENS
+============================ */
 export const buyToken = async (data) => {
   const res = await api.post("/token/buy", data);
   return res.data;
@@ -86,9 +85,9 @@ export const sellToken = async (data) => {
   return res.data;
 };
 
-//
-// ================= STAKING =================
-//
+/* ============================
+   STAKING
+============================ */
 export const stakeTokens = async (data) => {
   const res = await api.post("/stake", data);
   return res.data;
@@ -99,25 +98,25 @@ export const getStakes = async (userId) => {
   return res.data;
 };
 
-//
-// ================= REFERRALS =================
-//
+/* ============================
+   REFERRALS
+============================ */
 export const getReferralData = async (userId) => {
   const res = await api.get(`/referrals/${userId}`);
   return res.data;
 };
 
-//
-// ================= TRANSACTIONS =================
-//
+/* ============================
+   TRANSACTIONS
+============================ */
 export const getUserTransactions = async (userId) => {
   const res = await api.get(`/transactions/${userId}`);
   return res.data;
 };
 
-//
-// ================= ADMIN =================
-//
+/* ============================
+   ADMIN
+============================ */
 export const admin = {
   async getUsers() {
     const res = await api.get("/admin/users");
@@ -137,7 +136,7 @@ export const admin = {
   },
 };
 
-//
-// ================= DEFAULT EXPORT =================
-//
+/* ============================
+   DEFAULT EXPORT
+============================ */
 export default api;
