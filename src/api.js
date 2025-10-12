@@ -1,141 +1,57 @@
-// src/api.js
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "https://mvzx-backend.onrender.com",
-  headers: { "Content-Type": "application/json" },
+  baseURL: process.env.REACT_APP_API_URL || "https://mvzx-backend.onrender.com/api",
 });
 
-/* ============================
-   AUTHENTICATION
-============================ */
-export const register = async (userData) => {
+// ===================== AUTH =====================
+
+// Register new user
+export const registerUser = async (userData) => {
   const res = await api.post("/auth/register", userData);
   return res.data;
 };
 
-export const registerUser = register; // ✅ alias to fix build error
-
-export const login = async (credentials) => {
-  const res = await api.post("/auth/login", credentials);
+// Login existing user
+export const loginUser = async (userData) => {
+  const res = await api.post("/auth/login", userData);
   return res.data;
 };
 
-export const loginUser = login; // alias for compatibility
+// ===================== DEPOSITS =====================
 
-/* ============================
-   WALLET
-============================ */
-export const createWallet = async (userId, pin) => {
-  const res = await api.post("/wallet/create", { userId, pin });
+// Create a new deposit
+export const createDeposit = async (depositData) => {
+  const res = await api.post("/deposits", depositData);
   return res.data;
 };
 
-export const fetchWallet = async (userId) => {
-  const res = await api.get(`/wallet/${userId}`);
+// Get all deposits by user ID
+export const getUserDeposits = async (userId) => {
+  const res = await api.get(`/deposits/${userId}`);
   return res.data;
 };
 
-export const verifyPin = async (userId, pin) => {
-  const res = await api.post("/wallet/verify", { userId, pin });
+// ===================== WALLET =====================
+
+// Get wallet balance by user ID
+export const getWalletBalance = async (userId) => {
+  const res = await api.get(`/users/${userId}/wallet`);
   return res.data;
 };
 
-/* ============================
-   PAYMENTS / DEPOSITS
-============================ */
-export const initFlutterwavePayment = async (paymentData) => {
-  const res = await api.post("/payments/flutterwave/init", paymentData);
+// Update wallet balance (admin or system use)
+export const updateWalletBalance = async (userId, amount) => {
+  const res = await api.put(`/users/${userId}/wallet`, { amount });
   return res.data;
 };
 
-export const verifyFlutterwavePayment = async (transactionId) => {
-  const res = await api.get(`/payments/flutterwave/verify/${transactionId}`);
+// ===================== ADMIN =====================
+
+// Fetch all users (admin use)
+export const getAllUsers = async () => {
+  const res = await api.get("/users");
   return res.data;
 };
 
-export const createManualDeposit = async (depositData) => {
-  const res = await api.post("/payments/manual", depositData);
-  return res.data;
-};
-
-export const createDeposit = createManualDeposit; // ✅ alias to avoid “not exported” errors
-
-export const getPendingDeposits = async (adminId) => {
-  const res = await api.get(`/payments/manual/pending/${adminId}`);
-  return res.data;
-};
-
-export const approveDeposit = async (depositId) => {
-  const res = await api.post(`/payments/manual/approve/${depositId}`);
-  return res.data;
-};
-
-/* ============================
-   TOKENS
-============================ */
-export const buyToken = async (data) => {
-  const res = await api.post("/token/buy", data);
-  return res.data;
-};
-
-export const sellToken = async (data) => {
-  const res = await api.post("/token/sell", data);
-  return res.data;
-};
-
-/* ============================
-   STAKING
-============================ */
-export const stakeTokens = async (data) => {
-  const res = await api.post("/stake", data);
-  return res.data;
-};
-
-export const getStakes = async (userId) => {
-  const res = await api.get(`/stake/${userId}`);
-  return res.data;
-};
-
-/* ============================
-   REFERRALS
-============================ */
-export const getReferralData = async (userId) => {
-  const res = await api.get(`/referrals/${userId}`);
-  return res.data;
-};
-
-/* ============================
-   TRANSACTIONS
-============================ */
-export const getUserTransactions = async (userId) => {
-  const res = await api.get(`/transactions/${userId}`);
-  return res.data;
-};
-
-/* ============================
-   ADMIN
-============================ */
-export const admin = {
-  async getUsers() {
-    const res = await api.get("/admin/users");
-    return res.data;
-  },
-  async getTransactions() {
-    const res = await api.get("/admin/transactions");
-    return res.data;
-  },
-  async getStats() {
-    const res = await api.get("/admin/stats");
-    return res.data;
-  },
-  async approveDeposit(depositId) {
-    const res = await api.post(`/admin/deposits/approve/${depositId}`);
-    return res.data;
-  },
-};
-
-/* ============================
-   DEFAULT EXPORT
-============================ */
 export default api;
