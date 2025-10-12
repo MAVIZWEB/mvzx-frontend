@@ -2,7 +2,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || "https://mvzx-backend.onrender.com/api",
+  baseURL: process.env.REACT_APP_API_URL || "https://mvzx-backend.onrender.com",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -10,25 +10,15 @@ const api = axios.create({
    AUTHENTICATION
 ============================ */
 export const register = async (userData) => {
-  try {
-    const res = await api.post("/auth/register", userData);
-    return res.data;
-  } catch (error) {
-    console.error("Registration error:", error.response?.data || error.message);
-    throw error;
-  }
+  const res = await api.post("/api/auth/register", userData); // ✅ fixed endpoint
+  return res.data;
 };
 
 export const registerUser = register; // ✅ alias to fix build error
 
 export const login = async (credentials) => {
-  try {
-    const res = await api.post("/auth/login", credentials);
-    return res.data;
-  } catch (error) {
-    console.error("Login error:", error.response?.data || error.message);
-    throw error;
-  }
+  const res = await api.post("/api/auth/login", credentials); // ✅ fixed endpoint
+  return res.data;
 };
 
 export const loginUser = login; // alias for compatibility
@@ -37,17 +27,17 @@ export const loginUser = login; // alias for compatibility
    WALLET
 ============================ */
 export const createWallet = async (userId, pin) => {
-  const res = await api.post("/wallet/create", { userId, pin });
+  const res = await api.post("/api/wallet/create", { userId, pin });
   return res.data;
 };
 
 export const fetchWallet = async (userId) => {
-  const res = await api.get(`/wallet/${userId}`);
+  const res = await api.get(`/api/wallet/${userId}`);
   return res.data;
 };
 
 export const verifyPin = async (userId, pin) => {
-  const res = await api.post("/wallet/verify", { userId, pin });
+  const res = await api.post("/api/wallet/verify", { userId, pin });
   return res.data;
 };
 
@@ -55,29 +45,29 @@ export const verifyPin = async (userId, pin) => {
    PAYMENTS / DEPOSITS
 ============================ */
 export const initFlutterwavePayment = async (paymentData) => {
-  const res = await api.post("/payments/flutterwave/init", paymentData);
+  const res = await api.post("/api/payments/flutterwave/init", paymentData);
   return res.data;
 };
 
 export const verifyFlutterwavePayment = async (transactionId) => {
-  const res = await api.get(`/payments/flutterwave/verify/${transactionId}`);
+  const res = await api.get(`/api/payments/flutterwave/verify/${transactionId}`);
   return res.data;
 };
 
 export const createManualDeposit = async (depositData) => {
-  const res = await api.post("/payments/manual", depositData);
+  const res = await api.post("/api/payments/manual", depositData);
   return res.data;
 };
 
 export const createDeposit = createManualDeposit; // ✅ alias to avoid “not exported” errors
 
 export const getPendingDeposits = async (adminId) => {
-  const res = await api.get(`/payments/manual/pending/${adminId}`);
+  const res = await api.get(`/api/payments/manual/pending/${adminId}`);
   return res.data;
 };
 
 export const approveDeposit = async (depositId) => {
-  const res = await api.post(`/payments/manual/approve/${depositId}`);
+  const res = await api.post(`/api/payments/manual/approve/${depositId}`);
   return res.data;
 };
 
@@ -85,12 +75,12 @@ export const approveDeposit = async (depositId) => {
    TOKENS
 ============================ */
 export const buyToken = async (data) => {
-  const res = await api.post("/token/buy", data);
+  const res = await api.post("/api/token/buy", data);
   return res.data;
 };
 
 export const sellToken = async (data) => {
-  const res = await api.post("/token/sell", data);
+  const res = await api.post("/api/token/sell", data);
   return res.data;
 };
 
@@ -98,12 +88,12 @@ export const sellToken = async (data) => {
    STAKING
 ============================ */
 export const stakeTokens = async (data) => {
-  const res = await api.post("/stake", data);
+  const res = await api.post("/api/stake", data);
   return res.data;
 };
 
 export const getStakes = async (userId) => {
-  const res = await api.get(`/stake/${userId}`);
+  const res = await api.get(`/api/stake/${userId}`);
   return res.data;
 };
 
@@ -111,7 +101,7 @@ export const getStakes = async (userId) => {
    REFERRALS
 ============================ */
 export const getReferralData = async (userId) => {
-  const res = await api.get(`/referrals/${userId}`);
+  const res = await api.get(`/api/referrals/${userId}`);
   return res.data;
 };
 
@@ -119,7 +109,7 @@ export const getReferralData = async (userId) => {
    TRANSACTIONS
 ============================ */
 export const getUserTransactions = async (userId) => {
-  const res = await api.get(`/transactions/${userId}`);
+  const res = await api.get(`/api/transactions/${userId}`);
   return res.data;
 };
 
@@ -128,19 +118,19 @@ export const getUserTransactions = async (userId) => {
 ============================ */
 export const admin = {
   async getUsers() {
-    const res = await api.get("/admin/users");
+    const res = await api.get("/api/admin/users");
     return res.data;
   },
   async getTransactions() {
-    const res = await api.get("/admin/transactions");
+    const res = await api.get("/api/admin/transactions");
     return res.data;
   },
   async getStats() {
-    const res = await api.get("/admin/stats");
+    const res = await api.get("/api/admin/stats");
     return res.data;
   },
   async approveDeposit(depositId) {
-    const res = await api.post(`/admin/deposits/approve/${depositId}`);
+    const res = await api.post(`/api/admin/deposits/approve/${depositId}`);
     return res.data;
   },
 };
