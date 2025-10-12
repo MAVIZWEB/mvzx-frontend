@@ -1,29 +1,42 @@
-import React, { useState } from 'react';
-import { auth } from '../api';
+import React, { useState } from "react";
+import { loginUser } from "../api";
 
-export default function Login({ onDone }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [msg, setMsg] = useState('');
+function Login() {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function submit(e) {
+  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await auth.login({ email, password });
-    if (res.error) setMsg(res.error);
-    else {
-      localStorage.setItem('mvzx_token', res.token);
-      localStorage.setItem('mvzx_user', JSON.stringify(res.user));
-      onDone && onDone();
+    setLoading(true);
+    setMessage("");
+    try {
+      const res = await loginUser(form);
+      localStorage.setItem("token", res.token);
+      setMessage("✅ Login successful!");
+      window.location.href = "/wallet";
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    } finally {
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <form onSubmit={submit} className="card">
+    <div className="form-container">
       <h2>Login</h2>
-      <input value={email} onChange={e => setEmail(e.target.value)} placeholder="email" />
-      <input value={password} onChange={e => setPassword(e.target.value)} placeholder="password" type="password" />
-      <button type="submit">Login</button>
-      <div className="msg">{msg}</div>
-    </form>
+      <form onSubmit={handleSubmit}>
+        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required />
+        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required />
+        <button type="submit" disabled={loading}>
+          {loading ? "Logging in..." : "Login"}
+        </button>
+      </form>
+      {message && <p>{message}</p>}
+    </div>
   );
 }
+
+export default Login;
