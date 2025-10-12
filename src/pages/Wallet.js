@@ -1,42 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { wallet } from '../api';
+import React, { useEffect, useState } from "react";
+import { fetchWallet, createWallet } from "../api";
 
-export default function Wallet() {
-  const [pin, setPin] = useState('');
-  const [address, setAddress] = useState(null);
-  const [msg, setMsg] = useState('');
-
-  async function create(e) {
-    e.preventDefault();
-    if (!/^[0-9]{4}$/.test(pin)) return setMsg('PIN must be 4 digits');
-    const res = await wallet.create(pin);
-    if (res.error) setMsg(res.error);
-    else setAddress(res.address);
-  }
+function Wallet() {
+  const token = localStorage.getItem("token");
+  const [wallet, setWallet] = useState(null);
+  const [pin, setPin] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
-    (async () => {
-      const r = await wallet.me();
-      if (!r.error && r.address) setAddress(r.address);
-    })();
-  }, []);
+    const loadWallet = async () => {
+      try {
+        const res = await fetchWallet(token);
+        setWallet(res);
+      } catch (err) {
+        setWallet(null);
+      }
+    };
+    loadWallet();
+  }, [token]);
+
+  const handleCreateWallet = async (e) => {
+    e.preventDefault();
+    if (pin.length !== 4) return setMessage("❌ PIN must be 4 digits");
+    try {
+      const res = await createWallet(pin, token);
+      setMessage("✅ Wallet created!");
+      setWallet(res.wallet);
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    }
+  };
 
   return (
-    <div className="card">
-      <h2>Wallet</h2>
-      {address ? (
+    <div className="wallet-container">
+      <h2>My Wallet</h2>
+      {wallet ? (
         <div>
-          <div><strong>Address:</strong> {address}</div>
-          <div>Use this address to receive MVZx tokens (internal mapping to BEP-20) in your account.</div>
+          <p>Wallet Address: <b>{wallet.address}</b></p>
+          <p>Balance: {wallet.balance} MVZx</p>
         </div>
       ) : (
-        <form onSubmit={create}>
-          <label>Create 4-digit PIN (used to derive wallet address)</label>
-          <input value={pin} onChange={e => setPin(e.target.value)} placeholder="1234" />
+        <form onSubmit={handleCreateWallet}>
+          <input type="number" placeholder="Enter 4-digit PIN" value={pin} onChange={(e) => setPin(e.target.value)} required />
           <button type="submit">Create Wallet</button>
         </form>
       )}
-      <div className="msg">{msg}</div>
+      {message && <p>{message}</p>}
     </div>
   );
 }
+
+export default Wallet;
