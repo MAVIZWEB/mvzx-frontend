@@ -14,13 +14,14 @@ export const register = async (userData) => {
   return res.data;
 };
 
+export const registerUser = register; // ✅ alias to fix build error
+
 export const login = async (credentials) => {
   const res = await api.post("/auth/login", credentials);
   return res.data;
 };
 
-// Alias for compatibility with existing imports
-export const loginUser = login;
+export const loginUser = login; // alias for compatibility
 
 /* ============================
    WALLET
@@ -53,14 +54,12 @@ export const verifyFlutterwavePayment = async (transactionId) => {
   return res.data;
 };
 
-// Manual bank transfer deposits
 export const createManualDeposit = async (depositData) => {
   const res = await api.post("/payments/manual", depositData);
   return res.data;
 };
 
-// Alias to prevent “createDeposit not exported” build errors
-export const createDeposit = createManualDeposit;
+export const createDeposit = createManualDeposit; // ✅ alias to avoid “not exported” errors
 
 export const getPendingDeposits = async (adminId) => {
   const res = await api.get(`/payments/manual/pending/${adminId}`);
