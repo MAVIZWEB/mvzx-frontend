@@ -1,42 +1,43 @@
-import React, { useState } from 'react';
-import { deposit } from '../api';
+import React, { useState } from "react";
+import { createDeposit, initFlutterwavePayment } from "../api";
 
-export default function Deposit(){
-  const [amount, setAmount] = useState('');
-  const [msg, setMsg] = useState('');
+function Deposit() {
+  const token = localStorage.getItem("token");
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState("manual");
+  const [message, setMessage] = useState("");
 
-  async function bankManual(e){
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await deposit.bankManual({ amount, currency: 'NGN' });
-    if (res.error) setMsg(res.error);
-    else setMsg('Deposit recorded as pending admin approval.');
-  }
-
-  async function flutter(e){
-    e.preventDefault();
-    const res = await deposit.flutterInit({ amount, currency: 'NGN', callback_url: window.location.href });
-    if (res.error) setMsg(res.error || JSON.stringify(res));
-    else setMsg('Flutterwave initialized - check response for payment link.');
-  }
+    setMessage("");
+    try {
+      if (method === "manual") {
+        await createDeposit({ amount, method }, token);
+        setMessage("✅ Deposit submitted. Awaiting admin approval.");
+      } else {
+        const email = prompt("Enter your Flutterwave email:");
+        const res = await initFlutterwavePayment(amount, "NGN", email, token);
+        window.location.href = res.payment_link;
+      }
+    } catch (err) {
+      setMessage("❌ " + err.message);
+    }
+  };
 
   return (
-    <div className="card">
-      <h2>Deposit</h2>
-      <form onSubmit={bankManual}>
-        <label>Bank Transfer - Manual</label>
-        <input value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Amount" />
-        <button type="submit">Record Bank Deposit (pending admin)</button>
+    <div className="form-container">
+      <h2>Deposit Funds</h2>
+      <form onSubmit={handleSubmit}>
+        <input type="number" placeholder="Amount (NGN)" value={amount} onChange={(e) => setAmount(e.target.value)} required />
+        <select value={method} onChange={(e) => setMethod(e.target.value)}>
+          <option value="manual">Manual Bank Transfer</option>
+          <option value="flutterwave">Flutterwave</option>
+        </select>
+        <button type="submit">Deposit</button>
       </form>
-
-      <hr />
-
-      <form onSubmit={flutter}>
-        <label>Flutterwave (online)</label>
-        <input value={amount} onChange={e=>setAmount(e.target.value)} placeholder="Amount" />
-        <button type="submit">Pay with Flutterwave</button>
-      </form>
-
-      <div className="msg">{msg}</div>
+      {message && <p>{message}</p>}
     </div>
   );
 }
+
+export default Deposit;
