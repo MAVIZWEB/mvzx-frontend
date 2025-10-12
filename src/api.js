@@ -1,89 +1,96 @@
-import axios from 'axios';
+// frontend/src/api.js
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://mvzx-backend.onrender.com';
+import axios from "axios";
 
-// === User Authentication ===
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "https://mvzx-backend.onrender.com";
 
-// Register new user
-export const registerUser = async (userData) => {
-  const response = await axios.post(`${API_BASE_URL}/api/users/register`, userData);
+// Create axios instance
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: { "Content-Type": "application/json" },
+});
+
+// ==============================
+// AUTHENTICATION
+// ==============================
+
+// Register a new user
+export const registerUser = async (formData) => {
+  const response = await api.post("/auth/register", formData);
   return response.data;
 };
 
 // Login user
-export const loginUser = async (credentials) => {
-  const response = await axios.post(`${API_BASE_URL}/api/users/login`, credentials);
+export const loginUser = async (formData) => {
+  const response = await api.post("/auth/login", formData);
   return response.data;
 };
 
-// Get user profile
+// Fetch logged-in user profile
 export const getUserProfile = async (token) => {
-  const response = await axios.get(`${API_BASE_URL}/api/users/profile`, {
+  const response = await api.get("/auth/profile", {
     headers: { Authorization: `Bearer ${token}` },
   });
   return response.data;
 };
 
-// === Deposit Handling ===
-export const createDeposit = async (depositData) => {
-  const response = await axios.post(`${API_BASE_URL}/api/deposit`, depositData);
+// ==============================
+// WALLET & PAYMENTS
+// ==============================
+
+// Fetch user wallet balance & transactions
+export const fetchWallet = async (userId) => {
+  const response = await api.get(`/wallet/${userId}`);
   return response.data;
 };
 
-// === Withdrawal Handling ===
-export const createWithdrawal = async (withdrawalData) => {
-  const response = await axios.post(`${API_BASE_URL}/api/withdrawal`, withdrawalData);
-  return response.data;
-};
-
-// === Staking ===
-export const createStake = async (stakeData) => {
-  const response = await axios.post(`${API_BASE_URL}/api/stake`, stakeData);
-  return response.data;
-};
-
-// === Referral ===
-export const getReferralData = async (userId) => {
-  const response = await axios.get(`${API_BASE_URL}/api/referrals/${userId}`);
-  return response.data;
-};
-
-// === Transactions ===
-export const getTransactions = async (userId) => {
-  const response = await axios.get(`${API_BASE_URL}/api/transactions/${userId}`);
-  return response.data;
-};
-
-// === Admin Controls ===
-export const admin = {
-  getPendingDeposits: async () => {
-    const response = await axios.get(`${API_BASE_URL}/api/admin/deposits/pending`);
-    return response.data;
-  },
-  approveDeposit: async (depositId) => {
-    const response = await axios.put(`${API_BASE_URL}/api/admin/deposits/${depositId}/approve`);
-    return response.data;
-  },
-  rejectDeposit: async (depositId) => {
-    const response = await axios.put(`${API_BASE_URL}/api/admin/deposits/${depositId}/reject`);
-    return response.data;
-  },
-};
-
-// === Flutterwave Payment Integration ===
+// Initialize Flutterwave payment
 export const initFlutterwavePayment = async (paymentData) => {
-  const response = await axios.post(`${API_BASE_URL}/api/payments/flutterwave/init`, paymentData);
+  const response = await api.post("/payments/flutterwave/init", paymentData);
   return response.data;
 };
 
-// === Bank Transfer Payments ===
-export const initBankTransfer = async (transferData) => {
-  const response = await axios.post(`${API_BASE_URL}/api/payments/bank/init`, transferData);
+// Confirm payment status
+export const verifyPayment = async (transactionId) => {
+  const response = await api.get(`/payments/verify/${transactionId}`);
   return response.data;
 };
 
-// === USDT Payments ===
-export const initUSDTTransfer = async (transferData) => {
-  const response = await axios.post(`${API_BASE_URL}/api/payments/usdt/init`, transferData);
+// ==============================
+// TOKEN PURCHASES / TRADING
+// ==============================
+
+// Buy tokens
+export const buyToken = async (purchaseData) => {
+  const response = await api.post("/token/buy", purchaseData);
   return response.data;
+};
+
+// Fetch token price info
+export const getTokenPrice = async () => {
+  const response = await api.get("/token/price");
+  return response.data;
+};
+
+// ==============================
+// REFERRALS & STAKING
+// ==============================
+
+// Fetch referral stats
+export const getReferralData = async (userId) => {
+  const response = await api.get(`/referrals/${userId}`);
+  return response.data;
+};
+
+// Fetch staking rewards or stats
+export const getStakingInfo = async (userId) => {
+  const response = await api.get(`/staking/${userId}`);
+  return response.data;
+};
+
+// ==============================
+// EXPORTS
+// ==============================
+export {
+  api,
 };
