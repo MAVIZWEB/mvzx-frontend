@@ -1,23 +1,34 @@
+// src/pages/Register.js
 import React, { useState } from "react";
-import { registerUser } from "../api";
+import axios from "axios";
 
 function Register() {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const API_BASE =
+    process.env.REACT_APP_API_URL ||
+    "https://mvzx-backend.onrender.com/api";
+
+  const handleChange = (e) =>
+    setForm({ ...form, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
     try {
-      const res = await registerUser(form);
+      const res = await axios.post(`${API_BASE}/auth/register`, form);
       setMessage("✅ Registration successful! Please log in.");
-      setForm({ name: "", email: "", password: "" });
+      setForm({ email: "", password: "" });
     } catch (err) {
-      setMessage("❌ " + err.message);
+      console.error(err);
+      setMessage(
+        "❌ " +
+          (err.response?.data?.error || err.message || "Registration failed")
+      );
     } finally {
       setLoading(false);
     }
@@ -27,9 +38,22 @@ function Register() {
     <div className="form-container">
       <h2>Register</h2>
       <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Full Name" value={form.name} onChange={handleChange} required />
-        <input name="email" type="email" placeholder="Email" value={form.email} onChange={handleChange} required />
-        <input name="password" type="password" placeholder="Password" value={form.password} onChange={handleChange} required />
+        <input
+          name="email"
+          type="email"
+          placeholder="Email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="password"
+          type="password"
+          placeholder="Password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
         <button type="submit" disabled={loading}>
           {loading ? "Registering..." : "Register"}
         </button>
