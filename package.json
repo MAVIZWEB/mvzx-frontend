@@ -1,7 +1,7 @@
 {
   "name": "mvzx-backend",
   "version": "1.0.0",
-  "description": "MVZX Exchange Backend API — Handles authentication, wallets, deposits, and trading integration.",
+  "description": "MVZX Backend API",
   "main": "server.js",
   "type": "commonjs",
   "scripts": {
@@ -22,15 +22,5 @@
   },
   "engines": {
     "node": ">=18.x"
-  },
-  "keywords": [
-    "mvzx",
-    "backend",
-    "express",
-    "postgres",
-    "crypto",
-    "auth"
-  ],
-  "author": "MVZX Development Team",
-  "license": "MIT"
+  }
 }
